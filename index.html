@@ -22,23 +22,35 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 /* Toolbar */
 .toolbar { display:flex; align-items:center; gap:10px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap: wrap; }
-.toolbar h1 { font-size:18px; font-weight:700; color:var(--accent); margin-right:auto; }
+.title-block { display:flex; align-items:center; gap:10px; margin-right:auto; flex-wrap:wrap; }
+.toolbar h1 { font-size:18px; font-weight:700; color:var(--accent); }
 .toolbar button, .toolbar select { background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 14px; cursor:pointer; font-size:13px; transition: background .2s; }
 .toolbar button:hover, .toolbar select:hover { background:var(--accent2); }
 .toolbar .btn-add { background:var(--accent); border-color:var(--accent); font-weight:600; }
 .toolbar .btn-add:hover { background:#c73a52; }
+.filter-chip { display:flex; align-items:center; gap:8px; }
+.filter-chip select { min-width:150px; }
 
 /* Main layout */
 .main { display:flex; flex:1; overflow:hidden; }
 
 /* Task list panel */
 .task-panel { width:340px; min-width:260px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
-.task-panel-header { display:grid; grid-template-columns: 40px 1fr 90px 90px; padding:8px 6px; font-size:12px; font-weight:600; color:var(--text2); border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.5px; }
+.task-panel-header { display:grid; grid-template-columns: 40px 1fr 90px 90px; align-items:center; min-height:56px; padding:0 6px; font-size:12px; font-weight:600; color:var(--text2); border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.5px; }
 .task-list { flex:1; overflow-y:auto; }
-.task-row { display:grid; grid-template-columns: 40px 1fr 90px 90px; align-items:center; padding:6px; border-bottom:1px solid var(--border); cursor:pointer; transition: background .15s; font-size:13px; }
+.task-group-row { display:flex; align-items:center; height:36px; padding:0 10px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text); font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
+.task-group-row span:last-child { margin-left:auto; color:var(--text2); font-weight:600; }
+.task-row { display:grid; grid-template-columns: 40px 1fr 90px 90px; align-items:center; height:36px; padding:0 6px; border-bottom:1px solid var(--border); cursor:pointer; transition: background .15s, box-shadow .18s, opacity .18s, transform .24s cubic-bezier(.22,1,.36,1); font-size:13px; }
 .task-row:hover { background:var(--row-hover); }
 .task-row.selected { background: rgba(83,52,131,0.3); }
+.task-row.dragging { opacity:.45; }
+.task-row.reorder-animating { position:relative; z-index:1; }
+.task-row.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
+.task-row.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 .task-row .task-color { width:14px; height:14px; border-radius:3px; justify-self:center; }
+.task-meta { display:flex; align-items:center; gap:6px; overflow:hidden; }
+.task-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.task-badge { flex-shrink:0; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,0.08); color:var(--text2); font-size:10px; font-weight:700; text-transform:uppercase; }
 .task-row input { background:transparent; border:none; color:var(--text); font-size:13px; width:100%; outline:none; }
 .task-row input:focus { border-bottom:1px solid var(--accent); }
 .task-row .task-date { font-size:12px; color:var(--text2); text-align:center; }
@@ -51,14 +63,22 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .gantt-header-cell.weekend { background: rgba(255,255,255,0.03); }
 .gantt-header-cell.today { background: var(--today); color: var(--accent); font-weight:700; }
 .gantt-body { position:relative; }
+.gantt-group-row { display:flex; align-items:center; height:36px; padding:0 12px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text2); font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
 .gantt-row { display:flex; height:36px; border-bottom:1px solid var(--border); position:relative; }
 .gantt-cell { flex-shrink:0; border-right:1px solid rgba(255,255,255,0.03); }
 .gantt-cell.weekend { background: rgba(255,255,255,0.02); }
 .gantt-cell.today { background: var(--today); }
+.dependency-layer { position:absolute; top:0; left:0; z-index:3; overflow:visible; pointer-events:none; }
+.dependency-path { fill:none; stroke:rgba(238,238,238,0.55); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .gantt-bar-container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-.gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:grab; pointer-events:all; display:flex; align-items:center; padding:0 8px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: filter .15s; min-width: 6px; }
+.gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:grab; pointer-events:all; display:flex; align-items:center; gap:6px; padding:0 8px 0 24px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: filter .15s, transform .18s cubic-bezier(.22,1,.36,1); min-width: 6px; }
 .gantt-bar:hover { filter:brightness(1.2); }
+.gantt-bar.dragging-time { filter:brightness(1.15); box-shadow:0 10px 24px rgba(0,0,0,.28); cursor:grabbing; }
+.gantt-bar.dragging-reorder { filter:brightness(1.12); box-shadow:0 12px 28px rgba(0,0,0,.3); cursor:ns-resize; }
+.gantt-bar.reorder-animating { z-index:4; }
 .gantt-bar .bar-progress { position:absolute; left:0; top:0; height:100%; border-radius:5px; background:rgba(255,255,255,0.2); pointer-events:none; }
+.gantt-bar .reorder-handle { position:absolute; left:6px; top:4px; bottom:4px; width:12px; border-radius:4px; background:rgba(255,255,255,0.14); cursor:ns-resize; display:flex; align-items:center; justify-content:center; font-size:9px; letter-spacing:-1px; color:rgba(255,255,255,0.9); text-shadow:none; z-index:2; }
+.gantt-bar .reorder-handle:hover { background:rgba(255,255,255,0.24); }
 .gantt-bar .resize-handle { position:absolute; top:0; width:8px; height:100%; cursor:col-resize; pointer-events:all; }
 .gantt-bar .resize-handle.left { left:0; }
 .gantt-bar .resize-handle.right { right:0; }
@@ -71,6 +91,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .modal h2 { font-size:16px; margin-bottom:16px; color:var(--accent); }
 .modal label { display:block; font-size:13px; color:var(--text2); margin:10px 0 4px; }
 .modal input, .modal select, .modal textarea { width:100%; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px; outline:none; }
+.modal select[multiple] { min-height:110px; }
 .modal input:focus, .modal select:focus { border-color:var(--accent); }
 .modal .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
 .modal .modal-actions button { padding:8px 18px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:13px; }
@@ -93,14 +114,31 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .progress-container { display:flex; align-items:center; gap:10px; }
 .progress-container input[type=range] { flex:1; accent-color:var(--accent); }
 .progress-container span { font-size:13px; min-width:36px; }
+
+/* Add task footer */
+.task-panel-footer { padding:10px 8px; border-top:1px solid var(--border); flex-shrink:0; display:grid; grid-template-columns: 40px 1fr 1fr 1fr; gap:6px; align-items:center; background:rgba(255,255,255,0.02); }
+.task-panel-footer input { width:100%; min-width:0; height:30px; padding:0 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; }
+.task-panel-footer input:focus { border-color:var(--accent); }
+.task-panel-footer .inline-add-button { width:30px; height:30px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-size:18px; line-height:1; cursor:pointer; transition: filter .15s, transform .15s; }
+.task-panel-footer .inline-add-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.task-panel-footer .inline-add-button:active { transform:translateY(0); }
+.task-panel-footer .span-3 { grid-column: span 3; }
+.task-panel-footer .span-2 { grid-column: span 2; }
 </style>
 </head>
 <body>
 
 <!-- Toolbar -->
 <div class="toolbar">
-  <h1>LightGantt</h1>
-  <button class="btn-add" onclick="openModal()">+ Tâche</button>
+  <div class="title-block">
+    <h1>LightGantt</h1>
+    <div class="filter-chip">
+      <button id="ccFilterButton" onclick="focusCcFilter()">Filtre CC : Tous</button>
+      <select id="ccFilter" onchange="changeCcFilter(this.value)">
+        <option value="all">Tous les CC</option>
+      </select>
+    </div>
+  </div>
   <select id="zoomLevel" onchange="changeZoom(this.value)">
     <option value="day">Jour</option>
     <option value="week" selected>Semaine</option>
@@ -119,7 +157,15 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <div class="task-panel-header">
       <span></span><span>Tâche</span><span>Début</span><span>Fin</span>
     </div>
-    <div class="task-list" id="taskList"></div>
+    <div class="task-list" id="taskList" ondragover="onTaskListDragOver(event)" ondrop="dropTaskAtEnd(event)"></div>
+    <div class="task-panel-footer">
+      <button class="inline-add-button" onclick="createInlineTask()" aria-label="Ajouter une tâche">+</button>
+      <input class="span-3" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
+      <input class="span-2" type="text" id="inlineTaskApplication" placeholder="Application" list="applicationList" autocomplete="off">
+      <input type="text" id="inlineTaskCc" placeholder="CC" list="ccList" autocomplete="off">
+      <input type="date" id="inlineTaskStart">
+      <input type="date" id="inlineTaskEnd">
+    </div>
   </div>
   <!-- Gantt Chart -->
   <div class="gantt-panel" id="ganttPanel">
@@ -127,6 +173,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <div class="gantt-body" id="ganttBody"></div>
   </div>
 </div>
+
+<datalist id="applicationList"></datalist>
+<datalist id="ccList"></datalist>
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
@@ -139,6 +188,12 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <input type="date" id="taskStart">
     <label>Date de fin</label>
     <input type="date" id="taskEnd">
+    <label>Application</label>
+    <input type="text" id="taskApplication" placeholder="Nom de l'application" list="applicationList" autocomplete="off">
+    <label>CC</label>
+    <input type="text" id="taskCc" placeholder="Centre de compétences" list="ccList" autocomplete="off">
+    <label>Dépendances</label>
+    <select id="taskDependencies" multiple></select>
     <label>Progression</label>
     <div class="progress-container">
       <input type="range" id="taskProgress" min="0" max="100" value="0" oninput="document.getElementById('progressVal').textContent=this.value+'%'">
@@ -158,10 +213,14 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 // ── State ──
 const COLORS = ['#e94560','#533483','#0f3460','#00b4d8','#06d6a0','#ffd166','#ef476f','#118ab2','#073b4c','#8338ec'];
 const ZOOM = { day: 40, week: 18, month: 5 };
+const ROW_HEIGHT = 36;
 let tasks = [];
 let zoomMode = 'week';
 let cellWidth = ZOOM[zoomMode];
 let dragState = null;
+let reorderState = null;
+let pendingBarAnimation = null;
+let ccFilter = 'all';
 
 // ── Persistence ──
 function loadTasks() {
@@ -170,24 +229,150 @@ function loadTasks() {
     const today = new Date();
     const d = (off) => { const t = new Date(today); t.setDate(t.getDate()+off); return fmt(t); };
     tasks = [
-      { id: uid(), name:'Conception', start:d(-5), end:d(2), progress:80, color:COLORS[0] },
-      { id: uid(), name:'Développement', start:d(0), end:d(14), progress:30, color:COLORS[3] },
-      { id: uid(), name:'Tests', start:d(10), end:d(20), progress:0, color:COLORS[4] },
-      { id: uid(), name:'Déploiement', start:d(18), end:d(25), progress:0, color:COLORS[7] },
+      { id: uid(), name:'Conception', application:'Portail Client', cc:'DEV', start:d(-5), end:d(2), progress:80, color:COLORS[0], dependencies:[] },
+      { id: uid(), name:'Développement', application:'Portail Client', cc:'DEV', start:d(0), end:d(14), progress:30, color:COLORS[3], dependencies:[] },
+      { id: uid(), name:'Tests', application:'Portail Client', cc:'QA', start:d(10), end:d(20), progress:0, color:COLORS[4], dependencies:[] },
+      { id: uid(), name:'Déploiement', application:'Back Office', cc:'OPS', start:d(18), end:d(25), progress:0, color:COLORS[7], dependencies:[] },
     ];
     saveTasks();
   }
+  tasks = tasks.map(normalizeTask);
+  repairDependencies();
 }
 function saveTasks() { localStorage.setItem('lightgantt_tasks', JSON.stringify(tasks)); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function fmt(d) { return d.toISOString().split('T')[0]; }
 function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
 
+function normalizeTask(task) {
+  return {
+    id: task.id || uid(),
+    name: task.name || 'Tâche sans nom',
+    application: (task.application || 'Sans application').trim() || 'Sans application',
+    cc: (task.cc || '').trim(),
+    start: task.start,
+    end: task.end,
+    progress: Number.isFinite(task.progress) ? task.progress : parseInt(task.progress || 0, 10) || 0,
+    color: task.color || COLORS[0],
+    dependencies: Array.isArray(task.dependencies) ? [...new Set(task.dependencies.filter(Boolean))] : [],
+  };
+}
+
+function repairDependencies() {
+  const ids = new Set(tasks.map(task => task.id));
+  tasks.forEach(task => {
+    task.dependencies = task.dependencies.filter(depId => depId !== task.id && ids.has(depId));
+  });
+}
+
+function getVisibleTasks() {
+  return tasks.filter(task => ccFilter === 'all' || (task.cc || 'Sans CC') === ccFilter);
+}
+
+function getGroupedVisibleRows() {
+  const visibleTasks = getVisibleTasks();
+  const groups = new Map();
+
+  visibleTasks.forEach(task => {
+    const key = task.application || 'Sans application';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(task);
+  });
+
+  return [...groups.keys()].sort((a, b) => a.localeCompare(b, 'fr')).flatMap(application => {
+    const appTasks = groups.get(application);
+    return [
+      { type: 'group', application, count: appTasks.length },
+      ...appTasks.map(task => ({ type: 'task', task })),
+    ];
+  });
+}
+
+function getVisibleTaskIndexMap() {
+  const map = new Map();
+  getGroupedVisibleRows().forEach((row, index) => {
+    if (row.type === 'task') map.set(row.task.id, index);
+  });
+  return map;
+}
+
+function syncCcFilterOptions() {
+  const select = document.getElementById('ccFilter');
+  const ccValues = [...new Set(tasks.map(task => task.cc || 'Sans CC'))].sort((a, b) => a.localeCompare(b, 'fr'));
+  select.innerHTML = `<option value="all">Tous les CC</option>${ccValues.map(cc => `<option value="${escapeHtml(cc)}">${escapeHtml(cc)}</option>`).join('')}`;
+  select.value = ccValues.includes(ccFilter) || ccFilter === 'all' ? ccFilter : 'all';
+  ccFilter = select.value;
+  document.getElementById('ccFilterButton').textContent = `Filtre CC : ${ccFilter === 'all' ? 'Tous' : ccFilter}`;
+}
+
+function syncDatalistOptions() {
+  const applications = [...new Set(tasks.map(t => t.application).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+  const ccValues = [...new Set(tasks.map(t => t.cc).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+  document.getElementById('applicationList').innerHTML = applications.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+  document.getElementById('ccList').innerHTML = ccValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+}
+
+function changeCcFilter(value) {
+  ccFilter = value;
+  render();
+}
+
+function focusCcFilter() {
+  document.getElementById('ccFilter').focus();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function sameApplication(taskA, taskB) {
+  return taskA && taskB && taskA.application === taskB.application;
+}
+
+function getDefaultTaskDates() {
+  const start = new Date();
+  start.setHours(0,0,0,0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  return { start: fmt(start), end: fmt(end) };
+}
+
+function resetInlineTaskForm() {
+  const defaults = getDefaultTaskDates();
+  document.getElementById('inlineTaskName').value = '';
+  document.getElementById('inlineTaskApplication').value = '';
+  document.getElementById('inlineTaskCc').value = '';
+  document.getElementById('inlineTaskStart').value = defaults.start;
+  document.getElementById('inlineTaskEnd').value = defaults.end;
+}
+
+function createTask(taskData) {
+  tasks.push(normalizeTask({
+    id: uid(),
+    name: taskData.name,
+    application: taskData.application,
+    cc: taskData.cc,
+    start: taskData.start,
+    end: taskData.end,
+    progress: taskData.progress ?? 0,
+    color: taskData.color || COLORS[Math.floor(Math.random() * COLORS.length)],
+    dependencies: taskData.dependencies || [],
+  }));
+  saveTasks();
+  render();
+}
+
 // ── Timeline range ──
 function getRange() {
-  if (!tasks.length) { const t = new Date(); return { start: new Date(t.getFullYear(), t.getMonth(), 1), end: new Date(t.getFullYear(), t.getMonth()+2, 0) }; }
-  let min = parseDate(tasks[0].start), max = parseDate(tasks[0].end);
-  tasks.forEach(t => { const s=parseDate(t.start), e=parseDate(t.end); if(s<min) min=s; if(e>max) max=e; });
+  const visibleTasks = getVisibleTasks();
+  if (!visibleTasks.length) { const t = new Date(); return { start: new Date(t.getFullYear(), t.getMonth(), 1), end: new Date(t.getFullYear(), t.getMonth()+2, 0) }; }
+  let min = parseDate(visibleTasks[0].start), max = parseDate(visibleTasks[0].end);
+  visibleTasks.forEach(t => { const s=parseDate(t.start), e=parseDate(t.end); if(s<min) min=s; if(e>max) max=e; });
   const pad = zoomMode==='month'? 30 : zoomMode==='week'? 14 : 7;
   min = new Date(min); min.setDate(min.getDate()-pad);
   max = new Date(max); max.setDate(max.getDate()+pad);
@@ -197,19 +382,37 @@ function daysBetween(a,b) { return Math.round((b-a)/86400000); }
 
 // ── Render ──
 function render() {
+  syncCcFilterOptions();
+  syncDatalistOptions();
   renderTaskList();
   renderGantt();
 }
 
 function renderTaskList() {
   const el = document.getElementById('taskList');
-  el.innerHTML = tasks.map(t => `
-    <div class="task-row" ondblclick="openModal('${t.id}')" data-id="${t.id}">
-      <div class="task-color" style="background:${t.color}"></div>
-      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px" title="${t.name}">${t.name}</div>
-      <div class="task-date">${formatShort(t.start)}</div>
-      <div class="task-date">${formatShort(t.end)}</div>
-    </div>`).join('');
+  const rows = getGroupedVisibleRows();
+  el.innerHTML = rows.map(row => {
+    if (row.type === 'group') {
+      return `<div class="task-group-row"><span>${escapeHtml(row.application)}</span><span>${row.count} tâche${row.count > 1 ? 's' : ''}</span></div>`;
+    }
+
+    const task = row.task;
+    const ccLabel = task.cc || 'Sans CC';
+    return `
+      <div class="task-row" draggable="true" ondblclick="openModal('${task.id}')" data-id="${task.id}"
+        ondragstart="startTaskReorder(event,'${task.id}')"
+        ondragover="onTaskDragOver(event,'${task.id}')"
+        ondrop="dropTaskReorder(event,'${task.id}')"
+        ondragend="endTaskReorder()">
+        <div class="task-color" style="background:${task.color}"></div>
+        <div class="task-meta" title="${escapeHtml(task.name)} | ${escapeHtml(task.application)} | ${escapeHtml(ccLabel)}">
+          <span class="task-name">${escapeHtml(task.name)}</span>
+          <span class="task-badge">${escapeHtml(ccLabel)}</span>
+        </div>
+        <div class="task-date">${formatShort(task.start)}</div>
+        <div class="task-date">${formatShort(task.end)}</div>
+      </div>`;
+  }).join('');
 }
 
 function formatShort(s) { const d=parseDate(s); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}); }
@@ -219,6 +422,8 @@ function renderGantt() {
   const days = daysBetween(range.start, range.end) + 1;
   const totalWidth = days * cellWidth;
   const today = new Date(); today.setHours(0,0,0,0);
+  const rows = getGroupedVisibleRows();
+  const taskIndexMap = getVisibleTaskIndexMap();
 
   // Header
   const header = document.getElementById('ganttHeader');
@@ -260,7 +465,12 @@ function renderGantt() {
   let html = '';
 
   // Grid rows
-  tasks.forEach((t, idx) => {
+  rows.forEach(row => {
+    if (row.type === 'group') {
+      html += `<div class="gantt-group-row">${escapeHtml(row.application)}</div>`;
+      return;
+    }
+
     let cells = '';
     for (let i = 0; i < days; i++) {
       const d = new Date(range.start); d.setDate(d.getDate()+i);
@@ -271,22 +481,41 @@ function renderGantt() {
       if (isToday) cls += ' today';
       cells += `<div class="${cls}" style="width:${cellWidth}px"></div>`;
     }
-    html += `<div class="gantt-row" data-idx="${idx}">${cells}</div>`;
+    html += `<div class="gantt-row" data-id="${row.task.id}">${cells}</div>`;
   });
+
+  // Dependencies
+  html += `<svg class="dependency-layer" width="${totalWidth}" height="${rows.length * ROW_HEIGHT}" viewBox="0 0 ${totalWidth} ${rows.length * ROW_HEIGHT}" preserveAspectRatio="none">
+    <defs>
+      <marker id="depArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(238,238,238,0.55)"></path>
+      </marker>
+    </defs>
+    ${renderDependencyPaths(range, taskIndexMap)}
+  </svg>`;
 
   // Bars overlay
   html += '<div class="gantt-bar-container">';
-  tasks.forEach((t, idx) => {
+  rows.forEach((row, idx) => {
+    if (row.type !== 'task') return;
+
+    const t = row.task;
     const s = parseDate(t.start), e = parseDate(t.end);
     const left = daysBetween(range.start, s) * cellWidth;
     const width = (daysBetween(s, e) + 1) * cellWidth;
-    const top = idx * 36 + 7;
-    html += `<div class="gantt-bar" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}" ondblclick="openModal('${t.id}')"
+    const top = idx * ROW_HEIGHT + 7;
+    let dragClass = '';
+    if (dragState && dragState.id === t.id) {
+      dragClass = dragState.mode === 'reorder' ? ' dragging-reorder' : dragState.mode === 'move' ? ' dragging-time' : '';
+    }
+    const ccLabel = t.cc || 'Sans CC';
+    html += `<div class="gantt-bar${dragClass}" data-id="${t.id}" title="${escapeHtml(t.name)} | ${escapeHtml(t.application)} | ${escapeHtml(ccLabel)}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}" ondblclick="openModal('${t.id}')"
       onmousedown="startDrag(event,'${t.id}','move')">
       <div class="bar-progress" style="width:${t.progress}%"></div>
+      <div class="reorder-handle" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','reorder')">::</div>
       <div class="resize-handle left" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-left')"></div>
       <div class="resize-handle right" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-right')"></div>
-      <span style="position:relative;z-index:1">${t.name}</span>
+      <span style="position:relative;z-index:1">${escapeHtml(t.name)}</span>
     </div>`;
   });
   html += '</div>';
@@ -294,10 +523,35 @@ function renderGantt() {
   // Today line
   const todayOff = daysBetween(range.start, today);
   if (todayOff >= 0 && todayOff <= days) {
-    html += `<div class="today-line" style="left:${todayOff*cellWidth + cellWidth/2}px;height:${tasks.length*36}px"></div>`;
+    html += `<div class="today-line" style="left:${todayOff*cellWidth + cellWidth/2}px;height:${rows.length * ROW_HEIGHT}px"></div>`;
   }
 
   body.innerHTML = html;
+
+  if (pendingBarAnimation) {
+    animateGanttBarReorder(pendingBarAnimation);
+    pendingBarAnimation = null;
+  }
+}
+
+function renderDependencyPaths(range, taskIndexMap) {
+  return getVisibleTasks().flatMap(task => {
+    const targetRowIndex = taskIndexMap.get(task.id);
+    if (targetRowIndex === undefined) return [];
+
+    return task.dependencies.map(depId => {
+      const sourceTask = tasks.find(item => item.id === depId);
+      const sourceRowIndex = taskIndexMap.get(depId);
+      if (!sourceTask || sourceRowIndex === undefined) return '';
+
+      const sourceEndX = (daysBetween(range.start, parseDate(sourceTask.end)) + 1) * cellWidth;
+      const targetStartX = daysBetween(range.start, parseDate(task.start)) * cellWidth;
+      const sourceY = sourceRowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
+      const targetY = targetRowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
+      const elbowX = Math.max(sourceEndX + 18, targetStartX - 18);
+      return `<path class="dependency-path" marker-end="url(#depArrow)" d="M ${sourceEndX} ${sourceY} H ${elbowX} V ${targetY} H ${targetStartX}"></path>`;
+    });
+  }).join('');
 }
 
 // ── Drag & Drop ──
@@ -305,9 +559,18 @@ function startDrag(e, id, mode) {
   e.preventDefault();
   const task = tasks.find(t => t.id === id);
   if (!task) return;
-  dragState = { id, mode, startX: e.clientX, origStart: task.start, origEnd: task.end };
+  dragState = {
+    id,
+    mode,
+    startX: e.clientX,
+    startY: e.clientY,
+    origStart: task.start,
+    origEnd: task.end,
+    origIndex: tasks.findIndex(t => t.id === id),
+  };
   document.addEventListener('mousemove', onDrag);
   document.addEventListener('mouseup', endDrag);
+  render();
 }
 
 function onDrag(e) {
@@ -325,6 +588,8 @@ function onDrag(e) {
     const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
     task.start = fmt(ns);
     task.end = fmt(ne);
+  } else if (dragState.mode === 'reorder') {
+    reorderTaskFromBarDrag(e.clientY);
   } else if (dragState.mode === 'resize-right') {
     const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
     if (ne >= origS) task.end = fmt(ne);
@@ -336,24 +601,239 @@ function onDrag(e) {
 }
 
 function endDrag() {
-  if (dragState) { saveTasks(); dragState = null; }
+  if (dragState) {
+    saveTasks();
+    dragState = null;
+    render();
+  }
   document.removeEventListener('mousemove', onDrag);
   document.removeEventListener('mouseup', endDrag);
+}
+
+function reorderTaskFromBarDrag(pointerY) {
+  if (!dragState || dragState.mode !== 'reorder') return;
+
+  const body = document.getElementById('ganttBody');
+  const bodyRect = body.getBoundingClientRect();
+  const draggedTask = tasks.find(task => task.id === dragState.id);
+  const currentIndex = tasks.findIndex(t => t.id === dragState.id);
+  const rows = getGroupedVisibleRows();
+  const relativeY = pointerY - bodyRect.top;
+  const hoveredRow = rows[Math.max(0, Math.min(rows.length - 1, Math.floor(relativeY / ROW_HEIGHT)))];
+  if (!draggedTask || !hoveredRow || hoveredRow.type !== 'task') return;
+
+  const targetTask = hoveredRow.task;
+  if (!sameApplication(draggedTask, targetTask)) return;
+  const targetIndex = tasks.findIndex(t => t.id === targetTask.id);
+
+  if (targetIndex === currentIndex || currentIndex === -1) return;
+
+  pendingBarAnimation = captureGanttBarPositions();
+  const [movingTask] = tasks.splice(currentIndex, 1);
+  tasks.splice(targetIndex, 0, movingTask);
+}
+
+function captureGanttBarPositions() {
+  const positions = new Map();
+  document.querySelectorAll('.gantt-bar').forEach(bar => {
+    positions.set(bar.dataset.id, bar.getBoundingClientRect().top);
+  });
+  return positions;
+}
+
+function animateGanttBarReorder(previousPositions) {
+  document.querySelectorAll('.gantt-bar').forEach(bar => {
+    const previousTop = previousPositions.get(bar.dataset.id);
+    if (previousTop === undefined) return;
+
+    const newTop = bar.getBoundingClientRect().top;
+    const deltaY = previousTop - newTop;
+    if (!deltaY) return;
+
+    bar.classList.add('reorder-animating');
+    bar.style.transition = 'none';
+    bar.style.transform = `translateY(${deltaY}px)`;
+    bar.getBoundingClientRect();
+    bar.style.transition = '';
+
+    requestAnimationFrame(() => {
+      bar.style.transform = 'translateY(0)';
+    });
+
+    const cleanup = () => {
+      bar.classList.remove('reorder-animating');
+      bar.style.transform = '';
+      bar.style.transition = '';
+      bar.removeEventListener('transitionend', cleanup);
+    };
+
+    bar.addEventListener('transitionend', cleanup);
+  });
+}
+
+// ── Task reorder ──
+function startTaskReorder(e, id) {
+  reorderState = { draggedId: id, targetId: null, placement: 'after' };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  requestAnimationFrame(() => {
+    const row = document.querySelector(`.task-row[data-id="${id}"]`);
+    if (row) row.classList.add('dragging');
+  });
+}
+
+function onTaskDragOver(e, id) {
+  if (!reorderState || reorderState.draggedId === id) return;
+  e.preventDefault();
+
+  const row = e.currentTarget;
+  const draggedTask = tasks.find(task => task.id === reorderState.draggedId);
+  const targetTask = tasks.find(task => task.id === id);
+  if (!sameApplication(draggedTask, targetTask)) return;
+  const rect = row.getBoundingClientRect();
+  const placement = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+
+  reorderState.targetId = id;
+  reorderState.placement = placement;
+  updateDropIndicators();
+}
+
+function onTaskListDragOver(e) {
+  if (!reorderState) return;
+  e.preventDefault();
+
+  const list = e.currentTarget;
+  const lastRow = list.querySelector('.task-row:last-child');
+  if (!lastRow) return;
+
+  const draggedTask = tasks.find(task => task.id === reorderState.draggedId);
+  const targetTask = tasks.find(task => task.id === lastRow.dataset.id);
+  if (!sameApplication(draggedTask, targetTask)) return;
+
+  const rect = lastRow.getBoundingClientRect();
+  if (e.clientY >= rect.top + rect.height / 2) {
+    reorderState.targetId = lastRow.dataset.id;
+    reorderState.placement = 'after';
+    updateDropIndicators();
+  }
+}
+
+function dropTaskReorder(e, id) {
+  e.preventDefault();
+  if (!reorderState || reorderState.draggedId === id) {
+    endTaskReorder();
+    return;
+  }
+
+  const row = e.currentTarget;
+  const rect = row.getBoundingClientRect();
+  const placement = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+  moveTask(reorderState.draggedId, id, placement);
+  endTaskReorder(false);
+}
+
+function dropTaskAtEnd(e) {
+  if (!reorderState) return;
+  e.preventDefault();
+
+  const list = e.currentTarget;
+  const lastRow = list.querySelector('.task-row:last-child');
+  if (!lastRow || lastRow.dataset.id === reorderState.draggedId) {
+    endTaskReorder();
+    return;
+  }
+
+  moveTask(reorderState.draggedId, lastRow.dataset.id, 'after');
+  endTaskReorder(false);
+}
+
+function endTaskReorder(clearState = true) {
+  document.querySelectorAll('.task-row').forEach(row => {
+    row.classList.remove('dragging', 'drop-before', 'drop-after');
+  });
+
+  if (clearState) reorderState = null;
+}
+
+function updateDropIndicators() {
+  document.querySelectorAll('.task-row').forEach(row => {
+    row.classList.remove('drop-before', 'drop-after');
+    if (!reorderState || row.dataset.id !== reorderState.targetId) return;
+    row.classList.add(reorderState.placement === 'before' ? 'drop-before' : 'drop-after');
+  });
+}
+
+function captureTaskRowPositions() {
+  const positions = new Map();
+  document.querySelectorAll('.task-row').forEach(row => {
+    positions.set(row.dataset.id, row.getBoundingClientRect().top);
+  });
+  return positions;
+}
+
+function animateTaskListReorder(previousPositions) {
+  document.querySelectorAll('.task-row').forEach(row => {
+    const previousTop = previousPositions.get(row.dataset.id);
+    if (previousTop === undefined) return;
+
+    const newTop = row.getBoundingClientRect().top;
+    const deltaY = previousTop - newTop;
+    if (!deltaY) return;
+
+    row.classList.add('reorder-animating');
+    row.style.transition = 'none';
+    row.style.transform = `translateY(${deltaY}px)`;
+    row.getBoundingClientRect();
+    row.style.transition = '';
+
+    requestAnimationFrame(() => {
+      row.style.transform = 'translateY(0)';
+    });
+
+    const cleanup = () => {
+      row.classList.remove('reorder-animating');
+      row.style.transform = '';
+      row.style.transition = '';
+      row.removeEventListener('transitionend', cleanup);
+    };
+
+    row.addEventListener('transitionend', cleanup);
+  });
+}
+
+function moveTask(draggedId, targetId, placement) {
+  const fromIndex = tasks.findIndex(t => t.id === draggedId);
+  const targetIndex = tasks.findIndex(t => t.id === targetId);
+  if (fromIndex === -1 || targetIndex === -1 || fromIndex === targetIndex) return;
+  if (!sameApplication(tasks[fromIndex], tasks[targetIndex])) return;
+
+  const previousPositions = captureTaskRowPositions();
+  const [draggedTask] = tasks.splice(fromIndex, 1);
+  const baseIndex = tasks.findIndex(t => t.id === targetId);
+  const insertIndex = placement === 'before' ? baseIndex : baseIndex + 1;
+  tasks.splice(insertIndex, 0, draggedTask);
+  saveTasks();
+  reorderState = null;
+  render();
+  animateTaskListReorder(previousPositions);
 }
 
 // ── Modal ──
 function openModal(id) {
   const modal = document.getElementById('modalOverlay');
   const task = id ? tasks.find(t => t.id === id) : null;
+  const defaults = getDefaultTaskDates();
   document.getElementById('modalTitle').textContent = task ? 'Modifier la tâche' : 'Nouvelle tâche';
   document.getElementById('taskId').value = task ? task.id : '';
   document.getElementById('taskName').value = task ? task.name : '';
-  document.getElementById('taskStart').value = task ? task.start : fmt(new Date());
-  const defEnd = new Date(); defEnd.setDate(defEnd.getDate()+7);
-  document.getElementById('taskEnd').value = task ? task.end : fmt(defEnd);
+  document.getElementById('taskStart').value = task ? task.start : defaults.start;
+  document.getElementById('taskEnd').value = task ? task.end : defaults.end;
+  document.getElementById('taskApplication').value = task ? task.application : '';
+  document.getElementById('taskCc').value = task ? task.cc : '';
   document.getElementById('taskProgress').value = task ? task.progress : 0;
   document.getElementById('progressVal').textContent = (task ? task.progress : 0) + '%';
   document.getElementById('btnDelete').style.display = task ? '' : 'none';
+  renderDependencySelect(task);
 
   const selColor = task ? task.color : COLORS[Math.floor(Math.random()*COLORS.length)];
   document.getElementById('colorOptions').innerHTML = COLORS.map(c =>
@@ -372,26 +852,69 @@ function pickColor(el, c) {
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
 
+function renderDependencySelect(task) {
+  const select = document.getElementById('taskDependencies');
+  const selected = new Set(task ? task.dependencies : []);
+  select.innerHTML = tasks
+    .filter(item => !task || item.id !== task.id)
+    .map(item => `<option value="${item.id}" ${selected.has(item.id) ? 'selected' : ''}>${escapeHtml(item.application)} - ${escapeHtml(item.name)}</option>`)
+    .join('');
+}
+
 function saveTask() {
   const id = document.getElementById('taskId').value;
   const name = document.getElementById('taskName').value.trim();
   const start = document.getElementById('taskStart').value;
   const end = document.getElementById('taskEnd').value;
+  const application = document.getElementById('taskApplication').value.trim() || 'Sans application';
+  const cc = document.getElementById('taskCc').value.trim();
   const progress = parseInt(document.getElementById('taskProgress').value);
   const color = document.getElementById('colorOptions').dataset.selected;
+  const dependencies = [...document.getElementById('taskDependencies').selectedOptions].map(option => option.value);
 
   if (!name) { document.getElementById('taskName').focus(); return; }
   if (!start || !end || parseDate(end) < parseDate(start)) { alert('Dates invalides'); return; }
 
   if (id) {
     const t = tasks.find(t => t.id === id);
-    if (t) { Object.assign(t, {name, start, end, progress, color}); }
+    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, start, end, progress, color, dependencies })); }
   } else {
-    tasks.push({ id: uid(), name, start, end, progress, color });
+    createTask({ name, application, cc, start, end, progress, color, dependencies });
+    closeModal();
+    return;
   }
   saveTasks();
   closeModal();
   render();
+}
+
+function createInlineTask() {
+  const nameInput = document.getElementById('inlineTaskName');
+  const applicationInput = document.getElementById('inlineTaskApplication');
+  const ccInput = document.getElementById('inlineTaskCc');
+  const startInput = document.getElementById('inlineTaskStart');
+  const endInput = document.getElementById('inlineTaskEnd');
+
+  const name = nameInput.value.trim();
+  const application = applicationInput.value.trim() || 'Sans application';
+  const cc = ccInput.value.trim();
+  const start = startInput.value;
+  const end = endInput.value;
+
+  if (!name) {
+    nameInput.focus();
+    return;
+  }
+
+  if (!start || !end || parseDate(end) < parseDate(start)) {
+    alert('Dates invalides');
+    startInput.focus();
+    return;
+  }
+
+  createTask({ name, application, cc, start, end });
+  resetInlineTaskForm();
+  nameInput.focus();
 }
 
 function deleteTask() {
@@ -427,7 +950,12 @@ function importJSON(e) {
   reader.onload = function(ev) {
     try {
       const data = JSON.parse(ev.target.result);
-      if (Array.isArray(data)) { tasks = data; saveTasks(); render(); }
+      if (Array.isArray(data)) {
+        tasks = data.map(normalizeTask);
+        repairDependencies();
+        saveTasks();
+        render();
+      }
     } catch { alert('Fichier JSON invalide'); }
   };
   reader.readAsText(file);
@@ -448,6 +976,15 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
+['inlineTaskName', 'inlineTaskApplication', 'inlineTaskCc', 'inlineTaskStart', 'inlineTaskEnd'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      createInlineTask();
+    }
+  });
+});
+
 // ── Sync scroll ──
 document.getElementById('ganttPanel').addEventListener('scroll', function() {
   const scrollTop = this.scrollTop;
@@ -459,6 +996,7 @@ document.getElementById('taskList').addEventListener('scroll', function() {
 
 // ── Init ──
 loadTasks();
+resetInlineTaskForm();
 render();
 goToToday();
 </script>
