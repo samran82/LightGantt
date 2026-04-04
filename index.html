@@ -118,14 +118,20 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .progress-container span { font-size:13px; min-width:36px; }
 
 /* Add task footer */
-.task-panel-footer { padding:10px 8px; border-top:1px solid var(--border); flex-shrink:0; display:grid; grid-template-columns: 40px 1fr 1fr 1fr 1fr; gap:6px; align-items:center; background:rgba(255,255,255,0.02); }
+.task-panel-footer { padding:10px 8px; border-top:1px solid var(--border); flex-shrink:0; display:grid; grid-template-columns: 40px repeat(6, minmax(0, 1fr)); gap:6px; align-items:center; background:rgba(255,255,255,0.02); }
 .task-panel-footer input { width:100%; min-width:0; height:30px; padding:0 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; }
 .task-panel-footer input:focus { border-color:var(--accent); }
 .task-panel-footer .inline-add-button { width:30px; height:30px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-size:18px; line-height:1; cursor:pointer; transition: filter .15s, transform .15s; }
 .task-panel-footer .inline-add-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
 .task-panel-footer .inline-add-button:active { transform:translateY(0); }
-.task-panel-footer .span-4 { grid-column: span 4; }
-.task-panel-footer .span-2 { grid-column: span 2; }
+.task-panel-footer .inline-add-button { grid-column: 1; grid-row: 1 / span 3; align-self:stretch; height:auto; }
+.task-panel-footer .line1-task { grid-column: 2 / span 2; grid-row: 1; }
+.task-panel-footer .line1-start { grid-column: 4 / span 2; grid-row: 1; }
+.task-panel-footer .line1-end { grid-column: 6 / span 2; grid-row: 1; }
+.task-panel-footer .line2-application { grid-column: 2 / span 3; grid-row: 2; }
+.task-panel-footer .line2-cc { grid-column: 5 / span 3; grid-row: 2; }
+.task-panel-footer .line3-porteur { grid-column: 2 / span 4; grid-row: 3; }
+.task-panel-footer .line3-etp { grid-column: 6 / span 2; grid-row: 3; }
 
 @media (max-width: 980px) {
   .main { flex-direction:column; }
@@ -136,10 +142,15 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 @media (max-width: 760px) {
   .toolbar { padding:8px 10px; gap:8px; }
   .title-block { width:100%; }
-  .task-panel-footer { grid-template-columns: 36px 1fr 1fr; }
-  .task-panel-footer .span-4 { grid-column: span 2; }
-  .task-panel-footer .span-2 { grid-column: span 2; }
-  .task-panel-footer .inline-add-button { width:32px; height:32px; }
+  .task-panel-footer { grid-template-columns: 36px repeat(2, minmax(0, 1fr)); }
+  .task-panel-footer .inline-add-button { width:32px; grid-column:1; grid-row:1 / span 6; }
+  .task-panel-footer .line1-task { grid-column:2 / span 2; grid-row:1; }
+  .task-panel-footer .line1-start { grid-column:2 / span 2; grid-row:2; }
+  .task-panel-footer .line1-end { grid-column:2 / span 2; grid-row:3; }
+  .task-panel-footer .line2-application { grid-column:2 / span 2; grid-row:4; }
+  .task-panel-footer .line2-cc { grid-column:2 / span 2; grid-row:5; }
+  .task-panel-footer .line3-porteur { grid-column:2 / span 2; grid-row:6; }
+  .task-panel-footer .line3-etp { grid-column:2 / span 2; grid-row:7; }
   .modal { width:96vw; padding:14px; max-height:90vh; border-radius:10px; }
   .modal h2 { margin-bottom:12px; }
   .modal .modal-actions { position:sticky; bottom:-14px; background:var(--surface); padding-top:10px; }
@@ -182,13 +193,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <div class="task-list" id="taskList" ondragover="onTaskListDragOver(event)" ondrop="dropTaskAtEnd(event)"></div>
     <div class="task-panel-footer">
       <button class="inline-add-button" onclick="createInlineTask()" aria-label="Ajouter une tâche">+</button>
-      <input class="span-4" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
-      <input class="span-2" type="text" id="inlineTaskApplication" placeholder="Application" list="applicationList" autocomplete="off">
-      <input type="text" id="inlineTaskCc" placeholder="CC" list="ccList" autocomplete="off">
-      <input class="span-2" type="text" id="inlineTaskPorteur" placeholder="Porteur">
-      <input type="number" id="inlineTaskEtp" placeholder="ETP" min="0" step="0.1">
-      <input type="date" id="inlineTaskStart">
-      <input type="date" id="inlineTaskEnd">
+      <input class="line1-task" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
+      <input class="line1-start" type="date" id="inlineTaskStart">
+      <input class="line1-end" type="date" id="inlineTaskEnd">
+      <input class="line2-application" type="text" id="inlineTaskApplication" placeholder="Application" list="applicationList" autocomplete="off">
+      <input class="line2-cc" type="text" id="inlineTaskCc" placeholder="CC" list="ccList" autocomplete="off">
+      <input class="line3-porteur" type="text" id="inlineTaskPorteur" placeholder="Porteur">
+      <input class="line3-etp" type="number" id="inlineTaskEtp" placeholder="ETP" min="0" step="0.1">
     </div>
   </div>
   <!-- Gantt Chart -->
