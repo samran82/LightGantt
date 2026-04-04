@@ -22,14 +22,16 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 /* Toolbar */
 .toolbar { display:flex; align-items:center; gap:10px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap: wrap; }
-.title-block { display:flex; align-items:center; gap:10px; margin-right:auto; flex-wrap:wrap; }
+.title-block { display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-right:auto; }
 .toolbar h1 { font-size:18px; font-weight:700; color:var(--accent); }
 .toolbar button, .toolbar select { background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 14px; cursor:pointer; font-size:13px; transition: background .2s; }
 .toolbar button:hover, .toolbar select:hover { background:var(--accent2); }
 .toolbar .btn-add { background:var(--accent); border-color:var(--accent); font-weight:600; }
 .toolbar .btn-add:hover { background:#c73a52; }
-.filter-chip { display:flex; align-items:center; gap:8px; }
-.filter-chip select { min-width:150px; }
+.filter-chip { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.filter-chip .filter-btn { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text2); border-radius:999px; padding:4px 10px; font-size:12px; cursor:pointer; transition:all .15s; }
+.filter-chip .filter-btn:hover { background:rgba(255,255,255,0.12); color:var(--text); }
+.filter-chip .filter-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
 
 /* Main layout */
 .main { display:flex; flex:1; overflow:hidden; }
@@ -87,7 +89,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 /* Modal */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; display:none; align-items:center; justify-content:center; }
 .modal-overlay.active { display:flex; }
-.modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; width:400px; max-width:90vw; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; width:480px; max-width:92vw; max-height:88vh; overflow-y:auto; }
 .modal h2 { font-size:16px; margin-bottom:16px; color:var(--accent); }
 .modal label { display:block; font-size:13px; color:var(--text2); margin:10px 0 4px; }
 .modal input, .modal select, .modal textarea { width:100%; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px; outline:none; }
@@ -116,14 +118,39 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .progress-container span { font-size:13px; min-width:36px; }
 
 /* Add task footer */
-.task-panel-footer { padding:10px 8px; border-top:1px solid var(--border); flex-shrink:0; display:grid; grid-template-columns: 40px 1fr 1fr 1fr; gap:6px; align-items:center; background:rgba(255,255,255,0.02); }
+.task-panel-footer { padding:10px 8px; border-top:1px solid var(--border); flex-shrink:0; display:grid; grid-template-columns: 40px 1fr 1fr 1fr 1fr; gap:6px; align-items:center; background:rgba(255,255,255,0.02); }
 .task-panel-footer input { width:100%; min-width:0; height:30px; padding:0 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; }
 .task-panel-footer input:focus { border-color:var(--accent); }
 .task-panel-footer .inline-add-button { width:30px; height:30px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-size:18px; line-height:1; cursor:pointer; transition: filter .15s, transform .15s; }
 .task-panel-footer .inline-add-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
 .task-panel-footer .inline-add-button:active { transform:translateY(0); }
-.task-panel-footer .span-3 { grid-column: span 3; }
+.task-panel-footer .span-4 { grid-column: span 4; }
 .task-panel-footer .span-2 { grid-column: span 2; }
+
+@media (max-width: 980px) {
+  .main { flex-direction:column; }
+  .task-panel { width:100%; min-width:0; max-height:45vh; border-right:none; border-bottom:1px solid var(--border); }
+  .gantt-panel { min-height:0; }
+}
+
+@media (max-width: 760px) {
+  .toolbar { padding:8px 10px; gap:8px; }
+  .title-block { width:100%; }
+  .task-panel-footer { grid-template-columns: 36px 1fr 1fr; }
+  .task-panel-footer .span-4 { grid-column: span 2; }
+  .task-panel-footer .span-2 { grid-column: span 2; }
+  .task-panel-footer .inline-add-button { width:32px; height:32px; }
+  .modal { width:96vw; padding:14px; max-height:90vh; border-radius:10px; }
+  .modal h2 { margin-bottom:12px; }
+  .modal .modal-actions { position:sticky; bottom:-14px; background:var(--surface); padding-top:10px; }
+}
+
+/* Tooltip */
+.task-tooltip { position:fixed; z-index:200; max-width:320px; padding:10px 12px; background:rgba(15,52,96,0.96); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,.35); color:var(--text); font-size:12px; line-height:1.35; pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .12s, transform .12s; }
+.task-tooltip.visible { opacity:1; transform:translateY(0); }
+.task-tooltip .tt-title { font-size:13px; font-weight:700; color:#fff; margin-bottom:6px; }
+.task-tooltip .tt-line { color:var(--text2); margin-bottom:3px; }
+.task-tooltip .tt-line strong { color:var(--text); font-weight:700; }
 </style>
 </head>
 <body>
@@ -132,12 +159,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 <div class="toolbar">
   <div class="title-block">
     <h1>LightGantt</h1>
-    <div class="filter-chip">
-      <button id="ccFilterButton" onclick="focusCcFilter()">Filtre CC : Tous</button>
-      <select id="ccFilter" onchange="changeCcFilter(this.value)">
-        <option value="all">Tous les CC</option>
-      </select>
-    </div>
+    <div class="filter-chip" id="ccFilterButtons"></div>
   </div>
   <select id="zoomLevel" onchange="changeZoom(this.value)">
     <option value="day">Jour</option>
@@ -160,9 +182,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <div class="task-list" id="taskList" ondragover="onTaskListDragOver(event)" ondrop="dropTaskAtEnd(event)"></div>
     <div class="task-panel-footer">
       <button class="inline-add-button" onclick="createInlineTask()" aria-label="Ajouter une tâche">+</button>
-      <input class="span-3" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
+      <input class="span-4" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
       <input class="span-2" type="text" id="inlineTaskApplication" placeholder="Application" list="applicationList" autocomplete="off">
       <input type="text" id="inlineTaskCc" placeholder="CC" list="ccList" autocomplete="off">
+      <input class="span-2" type="text" id="inlineTaskPorteur" placeholder="Porteur">
+      <input type="number" id="inlineTaskEtp" placeholder="ETP" min="0" step="0.1">
       <input type="date" id="inlineTaskStart">
       <input type="date" id="inlineTaskEnd">
     </div>
@@ -192,6 +216,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <input type="text" id="taskApplication" placeholder="Nom de l'application" list="applicationList" autocomplete="off">
     <label>CC</label>
     <input type="text" id="taskCc" placeholder="Centre de compétences" list="ccList" autocomplete="off">
+    <label>Porteur</label>
+    <input type="text" id="taskPorteur" placeholder="Nom du porteur">
+    <label>ETP</label>
+    <input type="number" id="taskEtp" min="0" step="0.1" placeholder="Ex: 0.5">
     <label>Dépendances</label>
     <select id="taskDependencies" multiple></select>
     <label>Progression</label>
@@ -209,6 +237,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   </div>
 </div>
 
+<div id="taskTooltip" class="task-tooltip"></div>
+
 <script>
 // ── State ──
 const COLORS = ['#e94560','#533483','#0f3460','#00b4d8','#06d6a0','#ffd166','#ef476f','#118ab2','#073b4c','#8338ec'];
@@ -220,7 +250,8 @@ let cellWidth = ZOOM[zoomMode];
 let dragState = null;
 let reorderState = null;
 let pendingBarAnimation = null;
-let ccFilter = 'all';
+let ccFilters = new Set();
+let tooltipTaskId = null;
 
 // ── Persistence ──
 function loadTasks() {
@@ -245,11 +276,14 @@ function fmt(d) { return d.toISOString().split('T')[0]; }
 function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
 
 function normalizeTask(task) {
+  const parsedEtp = task.etp === '' || task.etp === null || task.etp === undefined ? null : parseFloat(task.etp);
   return {
     id: task.id || uid(),
     name: task.name || 'Tâche sans nom',
     application: (task.application || 'Sans application').trim() || 'Sans application',
     cc: (task.cc || '').trim(),
+    porteur: (task.porteur || '').trim(),
+    etp: Number.isFinite(parsedEtp) ? parsedEtp : null,
     start: task.start,
     end: task.end,
     progress: Number.isFinite(task.progress) ? task.progress : parseInt(task.progress || 0, 10) || 0,
@@ -266,7 +300,8 @@ function repairDependencies() {
 }
 
 function getVisibleTasks() {
-  return tasks.filter(task => ccFilter === 'all' || (task.cc || 'Sans CC') === ccFilter);
+  if (ccFilters.size === 0) return tasks;
+  return tasks.filter(task => ccFilters.has(task.cc || 'Sans CC'));
 }
 
 function getGroupedVisibleRows() {
@@ -297,12 +332,20 @@ function getVisibleTaskIndexMap() {
 }
 
 function syncCcFilterOptions() {
-  const select = document.getElementById('ccFilter');
+  const container = document.getElementById('ccFilterButtons');
   const ccValues = [...new Set(tasks.map(task => task.cc || 'Sans CC'))].sort((a, b) => a.localeCompare(b, 'fr'));
-  select.innerHTML = `<option value="all">Tous les CC</option>${ccValues.map(cc => `<option value="${escapeHtml(cc)}">${escapeHtml(cc)}</option>`).join('')}`;
-  select.value = ccValues.includes(ccFilter) || ccFilter === 'all' ? ccFilter : 'all';
-  ccFilter = select.value;
-  document.getElementById('ccFilterButton').textContent = `Filtre CC : ${ccFilter === 'all' ? 'Tous' : ccFilter}`;
+  ccFilters = new Set([...ccFilters].filter(cc => ccValues.includes(cc)));
+
+  const options = ['all', ...ccValues];
+  container.innerHTML = options.map(value => {
+    const label = value === 'all' ? 'Tous les CC' : value;
+    const active = value === 'all' ? (ccFilters.size === 0 ? ' active' : '') : (ccFilters.has(value) ? ' active' : '');
+    return `<button class="filter-btn${active}" data-value="${escapeHtml(value)}" onclick="changeCcFilterFromButton(this)">${escapeHtml(label)}</button>`;
+  }).join('');
+}
+
+function changeCcFilterFromButton(button) {
+  changeCcFilter(button.dataset.value || 'all');
 }
 
 function syncDatalistOptions() {
@@ -313,12 +356,14 @@ function syncDatalistOptions() {
 }
 
 function changeCcFilter(value) {
-  ccFilter = value;
+  if (value === 'all') {
+    ccFilters.clear();
+  } else if (ccFilters.has(value)) {
+    ccFilters.delete(value);
+  } else {
+    ccFilters.add(value);
+  }
   render();
-}
-
-function focusCcFilter() {
-  document.getElementById('ccFilter').focus();
 }
 
 function escapeHtml(value) {
@@ -347,6 +392,8 @@ function resetInlineTaskForm() {
   document.getElementById('inlineTaskName').value = '';
   document.getElementById('inlineTaskApplication').value = '';
   document.getElementById('inlineTaskCc').value = '';
+  document.getElementById('inlineTaskPorteur').value = '';
+  document.getElementById('inlineTaskEtp').value = '';
   document.getElementById('inlineTaskStart').value = defaults.start;
   document.getElementById('inlineTaskEnd').value = defaults.end;
 }
@@ -357,6 +404,8 @@ function createTask(taskData) {
     name: taskData.name,
     application: taskData.application,
     cc: taskData.cc,
+    porteur: taskData.porteur,
+    etp: taskData.etp,
     start: taskData.start,
     end: taskData.end,
     progress: taskData.progress ?? 0,
@@ -509,7 +558,10 @@ function renderGantt() {
       dragClass = dragState.mode === 'reorder' ? ' dragging-reorder' : dragState.mode === 'move' ? ' dragging-time' : '';
     }
     const ccLabel = t.cc || 'Sans CC';
-    html += `<div class="gantt-bar${dragClass}" data-id="${t.id}" title="${escapeHtml(t.name)} | ${escapeHtml(t.application)} | ${escapeHtml(ccLabel)}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}" ondblclick="openModal('${t.id}')"
+    html += `<div class="gantt-bar${dragClass}" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}" ondblclick="openModal('${t.id}')"
+      onmouseenter="showTaskTooltip(event,'${t.id}')"
+      onmousemove="moveTaskTooltip(event)"
+      onmouseleave="hideTaskTooltip()"
       onmousedown="startDrag(event,'${t.id}','move')">
       <div class="bar-progress" style="width:${t.progress}%"></div>
       <div class="reorder-handle" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','reorder')">::</div>
@@ -554,8 +606,70 @@ function renderDependencyPaths(range, taskIndexMap) {
   }).join('');
 }
 
+function getTaskById(id) {
+  return tasks.find(task => task.id === id) || null;
+}
+
+function buildTaskTooltipHtml(task) {
+  const ccLabel = task.cc || 'Sans CC';
+  const porteurLabel = task.porteur || 'Non renseigné';
+  const etpLabel = task.etp === null ? 'Non renseigné' : String(task.etp).replace('.', ',');
+  const deps = task.dependencies
+    .map(depId => getTaskById(depId))
+    .filter(Boolean)
+    .map(dep => dep.name);
+  const depsLabel = deps.length ? escapeHtml(deps.join(', ')) : 'Aucune';
+  return `
+    <div class="tt-title">${escapeHtml(task.name)}</div>
+    <div class="tt-line"><strong>Application:</strong> ${escapeHtml(task.application)}</div>
+    <div class="tt-line"><strong>CC:</strong> ${escapeHtml(ccLabel)}</div>
+    <div class="tt-line"><strong>Porteur:</strong> ${escapeHtml(porteurLabel)}</div>
+    <div class="tt-line"><strong>ETP:</strong> ${escapeHtml(etpLabel)}</div>
+    <div class="tt-line"><strong>Début:</strong> ${escapeHtml(task.start)}</div>
+    <div class="tt-line"><strong>Fin:</strong> ${escapeHtml(task.end)}</div>
+    <div class="tt-line"><strong>Progression:</strong> ${task.progress}%</div>
+    <div class="tt-line"><strong>Dépendances:</strong> ${depsLabel}</div>
+  `;
+}
+
+function showTaskTooltip(event, taskId) {
+  const task = getTaskById(taskId);
+  const tooltip = document.getElementById('taskTooltip');
+  if (!task || !tooltip) return;
+  tooltipTaskId = taskId;
+  tooltip.innerHTML = buildTaskTooltipHtml(task);
+  tooltip.classList.add('visible');
+  moveTaskTooltip(event);
+}
+
+function moveTaskTooltip(event) {
+  const tooltip = document.getElementById('taskTooltip');
+  if (!tooltip || !tooltipTaskId) return;
+
+  const offset = 14;
+  const rect = tooltip.getBoundingClientRect();
+  let x = event.clientX + offset;
+  let y = event.clientY + offset;
+
+  if (x + rect.width > window.innerWidth - 8) x = event.clientX - rect.width - offset;
+  if (y + rect.height > window.innerHeight - 8) y = event.clientY - rect.height - offset;
+  if (x < 8) x = 8;
+  if (y < 8) y = 8;
+
+  tooltip.style.left = `${x}px`;
+  tooltip.style.top = `${y}px`;
+}
+
+function hideTaskTooltip() {
+  const tooltip = document.getElementById('taskTooltip');
+  if (!tooltip) return;
+  tooltipTaskId = null;
+  tooltip.classList.remove('visible');
+}
+
 // ── Drag & Drop ──
 function startDrag(e, id, mode) {
+  hideTaskTooltip();
   e.preventDefault();
   const task = tasks.find(t => t.id === id);
   if (!task) return;
@@ -830,6 +944,8 @@ function openModal(id) {
   document.getElementById('taskEnd').value = task ? task.end : defaults.end;
   document.getElementById('taskApplication').value = task ? task.application : '';
   document.getElementById('taskCc').value = task ? task.cc : '';
+  document.getElementById('taskPorteur').value = task ? task.porteur : '';
+  document.getElementById('taskEtp').value = task && task.etp !== null ? task.etp : '';
   document.getElementById('taskProgress').value = task ? task.progress : 0;
   document.getElementById('progressVal').textContent = (task ? task.progress : 0) + '%';
   document.getElementById('btnDelete').style.display = task ? '' : 'none';
@@ -852,6 +968,10 @@ function pickColor(el, c) {
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
 
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
 function renderDependencySelect(task) {
   const select = document.getElementById('taskDependencies');
   const selected = new Set(task ? task.dependencies : []);
@@ -868,18 +988,22 @@ function saveTask() {
   const end = document.getElementById('taskEnd').value;
   const application = document.getElementById('taskApplication').value.trim() || 'Sans application';
   const cc = document.getElementById('taskCc').value.trim();
+  const porteur = document.getElementById('taskPorteur').value.trim();
+  const etpRaw = document.getElementById('taskEtp').value;
+  const etp = etpRaw === '' ? null : parseFloat(etpRaw);
   const progress = parseInt(document.getElementById('taskProgress').value);
   const color = document.getElementById('colorOptions').dataset.selected;
   const dependencies = [...document.getElementById('taskDependencies').selectedOptions].map(option => option.value);
 
   if (!name) { document.getElementById('taskName').focus(); return; }
   if (!start || !end || parseDate(end) < parseDate(start)) { alert('Dates invalides'); return; }
+  if (etp !== null && (!Number.isFinite(etp) || etp < 0)) { alert('ETP invalide'); document.getElementById('taskEtp').focus(); return; }
 
   if (id) {
     const t = tasks.find(t => t.id === id);
-    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, start, end, progress, color, dependencies })); }
+    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, etp, start, end, progress, color, dependencies })); }
   } else {
-    createTask({ name, application, cc, start, end, progress, color, dependencies });
+    createTask({ name, application, cc, porteur, etp, start, end, progress, color, dependencies });
     closeModal();
     return;
   }
@@ -892,12 +1016,16 @@ function createInlineTask() {
   const nameInput = document.getElementById('inlineTaskName');
   const applicationInput = document.getElementById('inlineTaskApplication');
   const ccInput = document.getElementById('inlineTaskCc');
+  const porteurInput = document.getElementById('inlineTaskPorteur');
+  const etpInput = document.getElementById('inlineTaskEtp');
   const startInput = document.getElementById('inlineTaskStart');
   const endInput = document.getElementById('inlineTaskEnd');
 
   const name = nameInput.value.trim();
   const application = applicationInput.value.trim() || 'Sans application';
   const cc = ccInput.value.trim();
+  const porteur = porteurInput.value.trim();
+  const etp = etpInput.value === '' ? null : parseFloat(etpInput.value);
   const start = startInput.value;
   const end = endInput.value;
 
@@ -912,7 +1040,13 @@ function createInlineTask() {
     return;
   }
 
-  createTask({ name, application, cc, start, end });
+  if (etp !== null && (!Number.isFinite(etp) || etp < 0)) {
+    alert('ETP invalide');
+    etpInput.focus();
+    return;
+  }
+
+  createTask({ name, application, cc, porteur, etp, start, end });
   resetInlineTaskForm();
   nameInput.focus();
 }
@@ -973,10 +1107,10 @@ function goToToday() {
 
 // ── Keyboard ──
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') { closeModal(); hideTaskTooltip(); }
 });
 
-['inlineTaskName', 'inlineTaskApplication', 'inlineTaskCc', 'inlineTaskStart', 'inlineTaskEnd'].forEach(id => {
+['inlineTaskName', 'inlineTaskApplication', 'inlineTaskCc', 'inlineTaskPorteur', 'inlineTaskEtp', 'inlineTaskStart', 'inlineTaskEnd'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -987,10 +1121,12 @@ document.addEventListener('keydown', e => {
 
 // ── Sync scroll ──
 document.getElementById('ganttPanel').addEventListener('scroll', function() {
+  hideTaskTooltip();
   const scrollTop = this.scrollTop;
   document.getElementById('taskList').scrollTop = scrollTop;
 });
 document.getElementById('taskList').addEventListener('scroll', function() {
+  hideTaskTooltip();
   document.getElementById('ganttPanel').scrollTop = this.scrollTop;
 });
 
