@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LightGantt</title>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --surface2: #0f3460;
+  --accent: #e94560;
+  --accent2: #533483;
+  --text: #eee;
+  --text2: #aaa;
+  --border: #2a2a4a;
+  --row-hover: rgba(233,69,96,0.07);
+  --today: rgba(233,69,96,0.18);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Toolbar */
+.toolbar { display:flex; align-items:center; gap:10px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap: wrap; }
+.toolbar h1 { font-size:18px; font-weight:700; color:var(--accent); margin-right:auto; }
+.toolbar button, .toolbar select { background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 14px; cursor:pointer; font-size:13px; transition: background .2s; }
+.toolbar button:hover, .toolbar select:hover { background:var(--accent2); }
+.toolbar .btn-add { background:var(--accent); border-color:var(--accent); font-weight:600; }
+.toolbar .btn-add:hover { background:#c73a52; }
+
+/* Main layout */
+.main { display:flex; flex:1; overflow:hidden; }
+
+/* Task list panel */
+.task-panel { width:340px; min-width:260px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+.task-panel-header { display:grid; grid-template-columns: 40px 1fr 90px 90px; padding:8px 6px; font-size:12px; font-weight:600; color:var(--text2); border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.5px; }
+.task-list { flex:1; overflow-y:auto; }
+.task-row { display:grid; grid-template-columns: 40px 1fr 90px 90px; align-items:center; padding:6px; border-bottom:1px solid var(--border); cursor:pointer; transition: background .15s; font-size:13px; }
+.task-row:hover { background:var(--row-hover); }
+.task-row.selected { background: rgba(83,52,131,0.3); }
+.task-row .task-color { width:14px; height:14px; border-radius:3px; justify-self:center; }
+.task-row input { background:transparent; border:none; color:var(--text); font-size:13px; width:100%; outline:none; }
+.task-row input:focus { border-bottom:1px solid var(--accent); }
+.task-row .task-date { font-size:12px; color:var(--text2); text-align:center; }
+
+/* Gantt panel */
+.gantt-panel { flex:1; overflow:auto; position:relative; }
+.gantt-header { position:sticky; top:0; z-index:10; background:var(--surface); border-bottom:1px solid var(--border); }
+.gantt-header-row { display:flex; height:28px; }
+.gantt-header-cell { flex-shrink:0; text-align:center; font-size:11px; color:var(--text2); border-right:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+.gantt-header-cell.weekend { background: rgba(255,255,255,0.03); }
+.gantt-header-cell.today { background: var(--today); color: var(--accent); font-weight:700; }
+.gantt-body { position:relative; }
+.gantt-row { display:flex; height:36px; border-bottom:1px solid var(--border); position:relative; }
+.gantt-cell { flex-shrink:0; border-right:1px solid rgba(255,255,255,0.03); }
+.gantt-cell.weekend { background: rgba(255,255,255,0.02); }
+.gantt-cell.today { background: var(--today); }
+.gantt-bar-container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+.gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:grab; pointer-events:all; display:flex; align-items:center; padding:0 8px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: filter .15s; min-width: 6px; }
+.gantt-bar:hover { filter:brightness(1.2); }
+.gantt-bar .bar-progress { position:absolute; left:0; top:0; height:100%; border-radius:5px; background:rgba(255,255,255,0.2); pointer-events:none; }
+.gantt-bar .resize-handle { position:absolute; top:0; width:8px; height:100%; cursor:col-resize; pointer-events:all; }
+.gantt-bar .resize-handle.left { left:0; }
+.gantt-bar .resize-handle.right { right:0; }
+.today-line { position:absolute; top:0; bottom:0; width:2px; background:var(--accent); z-index:5; pointer-events:none; }
+
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; display:none; align-items:center; justify-content:center; }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; width:400px; max-width:90vw; }
+.modal h2 { font-size:16px; margin-bottom:16px; color:var(--accent); }
+.modal label { display:block; font-size:13px; color:var(--text2); margin:10px 0 4px; }
+.modal input, .modal select, .modal textarea { width:100%; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px; outline:none; }
+.modal input:focus, .modal select:focus { border-color:var(--accent); }
+.modal .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
+.modal .modal-actions button { padding:8px 18px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:13px; }
+.modal .btn-save { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+.modal .btn-cancel { background:var(--surface2); color:var(--text); }
+.modal .btn-delete { background:#6b1a1a; color:#fff; border-color:#6b1a1a; margin-right:auto; }
+
+/* Color picker row */
+.color-options { display:flex; gap:8px; margin-top:6px; }
+.color-opt { width:28px; height:28px; border-radius:6px; cursor:pointer; border:2px solid transparent; transition: border-color .15s, transform .15s; }
+.color-opt:hover, .color-opt.active { border-color:#fff; transform:scale(1.15); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:var(--accent2); }
+
+/* Progress slider */
+.progress-container { display:flex; align-items:center; gap:10px; }
+.progress-container input[type=range] { flex:1; accent-color:var(--accent); }
+.progress-container span { font-size:13px; min-width:36px; }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <h1>LightGantt</h1>
+  <button class="btn-add" onclick="openModal()">+ Tâche</button>
+  <select id="zoomLevel" onchange="changeZoom(this.value)">
+    <option value="day">Jour</option>
+    <option value="week" selected>Semaine</option>
+    <option value="month">Mois</option>
+  </select>
+  <button onclick="exportJSON()">⬇ Export</button>
+  <button onclick="document.getElementById('importInput').click()">⬆ Import</button>
+  <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+  <button onclick="goToToday()">Aujourd'hui</button>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Task List -->
+  <div class="task-panel">
+    <div class="task-panel-header">
+      <span></span><span>Tâche</span><span>Début</span><span>Fin</span>
+    </div>
+    <div class="task-list" id="taskList"></div>
+  </div>
+  <!-- Gantt Chart -->
+  <div class="gantt-panel" id="ganttPanel">
+    <div class="gantt-header" id="ganttHeader"></div>
+    <div class="gantt-body" id="ganttBody"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Nouvelle tâche</h2>
+    <input type="hidden" id="taskId">
+    <label>Nom</label>
+    <input type="text" id="taskName" placeholder="Nom de la tâche">
+    <label>Date de début</label>
+    <input type="date" id="taskStart">
+    <label>Date de fin</label>
+    <input type="date" id="taskEnd">
+    <label>Progression</label>
+    <div class="progress-container">
+      <input type="range" id="taskProgress" min="0" max="100" value="0" oninput="document.getElementById('progressVal').textContent=this.value+'%'">
+      <span id="progressVal">0%</span>
+    </div>
+    <label>Couleur</label>
+    <div class="color-options" id="colorOptions"></div>
+    <div class="modal-actions">
+      <button class="btn-delete" id="btnDelete" onclick="deleteTask()" style="display:none">Supprimer</button>
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" onclick="saveTask()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+const COLORS = ['#e94560','#533483','#0f3460','#00b4d8','#06d6a0','#ffd166','#ef476f','#118ab2','#073b4c','#8338ec'];
+const ZOOM = { day: 40, week: 18, month: 5 };
+let tasks = [];
+let zoomMode = 'week';
+let cellWidth = ZOOM[zoomMode];
+let dragState = null;
+
+// ── Persistence ──
+function loadTasks() {
+  try { tasks = JSON.parse(localStorage.getItem('lightgantt_tasks') || '[]'); } catch { tasks = []; }
+  if (!tasks.length) {
+    const today = new Date();
+    const d = (off) => { const t = new Date(today); t.setDate(t.getDate()+off); return fmt(t); };
+    tasks = [
+      { id: uid(), name:'Conception', start:d(-5), end:d(2), progress:80, color:COLORS[0] },
+      { id: uid(), name:'Développement', start:d(0), end:d(14), progress:30, color:COLORS[3] },
+      { id: uid(), name:'Tests', start:d(10), end:d(20), progress:0, color:COLORS[4] },
+      { id: uid(), name:'Déploiement', start:d(18), end:d(25), progress:0, color:COLORS[7] },
+    ];
+    saveTasks();
+  }
+}
+function saveTasks() { localStorage.setItem('lightgantt_tasks', JSON.stringify(tasks)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function fmt(d) { return d.toISOString().split('T')[0]; }
+function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+
+// ── Timeline range ──
+function getRange() {
+  if (!tasks.length) { const t = new Date(); return { start: new Date(t.getFullYear(), t.getMonth(), 1), end: new Date(t.getFullYear(), t.getMonth()+2, 0) }; }
+  let min = parseDate(tasks[0].start), max = parseDate(tasks[0].end);
+  tasks.forEach(t => { const s=parseDate(t.start), e=parseDate(t.end); if(s<min) min=s; if(e>max) max=e; });
+  const pad = zoomMode==='month'? 30 : zoomMode==='week'? 14 : 7;
+  min = new Date(min); min.setDate(min.getDate()-pad);
+  max = new Date(max); max.setDate(max.getDate()+pad);
+  return { start:min, end:max };
+}
+function daysBetween(a,b) { return Math.round((b-a)/86400000); }
+
+// ── Render ──
+function render() {
+  renderTaskList();
+  renderGantt();
+}
+
+function renderTaskList() {
+  const el = document.getElementById('taskList');
+  el.innerHTML = tasks.map(t => `
+    <div class="task-row" ondblclick="openModal('${t.id}')" data-id="${t.id}">
+      <div class="task-color" style="background:${t.color}"></div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px" title="${t.name}">${t.name}</div>
+      <div class="task-date">${formatShort(t.start)}</div>
+      <div class="task-date">${formatShort(t.end)}</div>
+    </div>`).join('');
+}
+
+function formatShort(s) { const d=parseDate(s); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}); }
+
+function renderGantt() {
+  const range = getRange();
+  const days = daysBetween(range.start, range.end) + 1;
+  const totalWidth = days * cellWidth;
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Header
+  const header = document.getElementById('ganttHeader');
+  let monthRow = '', dayRow = '';
+  let curMonth = -1;
+  let monthSpan = 0, monthLabel = '';
+
+  for (let i = 0; i < days; i++) {
+    const d = new Date(range.start);
+    d.setDate(d.getDate() + i);
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const isToday = d.getTime() === today.getTime();
+
+    if (d.getMonth() !== curMonth) {
+      if (curMonth !== -1) monthRow += `<div class="gantt-header-cell" style="width:${monthSpan*cellWidth}px;font-weight:600">${monthLabel}</div>`;
+      curMonth = d.getMonth();
+      monthLabel = d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+      monthSpan = 0;
+    }
+    monthSpan++;
+
+    const cls = ['gantt-header-cell'];
+    if (isWeekend) cls.push('weekend');
+    if (isToday) cls.push('today');
+
+    let label = '';
+    if (zoomMode === 'day' || zoomMode === 'week') label = d.getDate();
+    else if (i % 7 === 0) label = d.getDate();
+
+    dayRow += `<div class="${cls.join(' ')}" style="width:${cellWidth}px">${label}</div>`;
+  }
+  monthRow += `<div class="gantt-header-cell" style="width:${monthSpan*cellWidth}px;font-weight:600">${monthLabel}</div>`;
+
+  header.innerHTML = `<div class="gantt-header-row">${monthRow}</div><div class="gantt-header-row">${dayRow}</div>`;
+
+  // Body
+  const body = document.getElementById('ganttBody');
+  body.style.width = totalWidth + 'px';
+  let html = '';
+
+  // Grid rows
+  tasks.forEach((t, idx) => {
+    let cells = '';
+    for (let i = 0; i < days; i++) {
+      const d = new Date(range.start); d.setDate(d.getDate()+i);
+      const isWeekend = d.getDay()===0||d.getDay()===6;
+      const isToday = d.getTime()===today.getTime();
+      let cls = 'gantt-cell';
+      if (isWeekend) cls += ' weekend';
+      if (isToday) cls += ' today';
+      cells += `<div class="${cls}" style="width:${cellWidth}px"></div>`;
+    }
+    html += `<div class="gantt-row" data-idx="${idx}">${cells}</div>`;
+  });
+
+  // Bars overlay
+  html += '<div class="gantt-bar-container">';
+  tasks.forEach((t, idx) => {
+    const s = parseDate(t.start), e = parseDate(t.end);
+    const left = daysBetween(range.start, s) * cellWidth;
+    const width = (daysBetween(s, e) + 1) * cellWidth;
+    const top = idx * 36 + 7;
+    html += `<div class="gantt-bar" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}" ondblclick="openModal('${t.id}')"
+      onmousedown="startDrag(event,'${t.id}','move')">
+      <div class="bar-progress" style="width:${t.progress}%"></div>
+      <div class="resize-handle left" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-left')"></div>
+      <div class="resize-handle right" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-right')"></div>
+      <span style="position:relative;z-index:1">${t.name}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Today line
+  const todayOff = daysBetween(range.start, today);
+  if (todayOff >= 0 && todayOff <= days) {
+    html += `<div class="today-line" style="left:${todayOff*cellWidth + cellWidth/2}px;height:${tasks.length*36}px"></div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+// ── Drag & Drop ──
+function startDrag(e, id, mode) {
+  e.preventDefault();
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  dragState = { id, mode, startX: e.clientX, origStart: task.start, origEnd: task.end };
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', endDrag);
+}
+
+function onDrag(e) {
+  if (!dragState) return;
+  const dx = e.clientX - dragState.startX;
+  const dayDelta = Math.round(dx / cellWidth);
+  const task = tasks.find(t => t.id === dragState.id);
+  if (!task) return;
+
+  const origS = parseDate(dragState.origStart);
+  const origE = parseDate(dragState.origEnd);
+
+  if (dragState.mode === 'move') {
+    const ns = new Date(origS); ns.setDate(ns.getDate()+dayDelta);
+    const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
+    task.start = fmt(ns);
+    task.end = fmt(ne);
+  } else if (dragState.mode === 'resize-right') {
+    const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
+    if (ne >= origS) task.end = fmt(ne);
+  } else if (dragState.mode === 'resize-left') {
+    const ns = new Date(origS); ns.setDate(ns.getDate()+dayDelta);
+    if (ns <= origE) task.start = fmt(ns);
+  }
+  render();
+}
+
+function endDrag() {
+  if (dragState) { saveTasks(); dragState = null; }
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', endDrag);
+}
+
+// ── Modal ──
+function openModal(id) {
+  const modal = document.getElementById('modalOverlay');
+  const task = id ? tasks.find(t => t.id === id) : null;
+  document.getElementById('modalTitle').textContent = task ? 'Modifier la tâche' : 'Nouvelle tâche';
+  document.getElementById('taskId').value = task ? task.id : '';
+  document.getElementById('taskName').value = task ? task.name : '';
+  document.getElementById('taskStart').value = task ? task.start : fmt(new Date());
+  const defEnd = new Date(); defEnd.setDate(defEnd.getDate()+7);
+  document.getElementById('taskEnd').value = task ? task.end : fmt(defEnd);
+  document.getElementById('taskProgress').value = task ? task.progress : 0;
+  document.getElementById('progressVal').textContent = (task ? task.progress : 0) + '%';
+  document.getElementById('btnDelete').style.display = task ? '' : 'none';
+
+  const selColor = task ? task.color : COLORS[Math.floor(Math.random()*COLORS.length)];
+  document.getElementById('colorOptions').innerHTML = COLORS.map(c =>
+    `<div class="color-opt ${c===selColor?'active':''}" style="background:${c}" onclick="pickColor(this,'${c}')"></div>`).join('');
+  document.getElementById('colorOptions').dataset.selected = selColor;
+
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('taskName').focus(), 100);
+}
+
+function pickColor(el, c) {
+  document.querySelectorAll('.color-opt').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('colorOptions').dataset.selected = c;
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+function saveTask() {
+  const id = document.getElementById('taskId').value;
+  const name = document.getElementById('taskName').value.trim();
+  const start = document.getElementById('taskStart').value;
+  const end = document.getElementById('taskEnd').value;
+  const progress = parseInt(document.getElementById('taskProgress').value);
+  const color = document.getElementById('colorOptions').dataset.selected;
+
+  if (!name) { document.getElementById('taskName').focus(); return; }
+  if (!start || !end || parseDate(end) < parseDate(start)) { alert('Dates invalides'); return; }
+
+  if (id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { Object.assign(t, {name, start, end, progress, color}); }
+  } else {
+    tasks.push({ id: uid(), name, start, end, progress, color });
+  }
+  saveTasks();
+  closeModal();
+  render();
+}
+
+function deleteTask() {
+  const id = document.getElementById('taskId').value;
+  if (id && confirm('Supprimer cette tâche ?')) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+    closeModal();
+    render();
+  }
+}
+
+// ── Zoom ──
+function changeZoom(mode) {
+  zoomMode = mode;
+  cellWidth = ZOOM[mode];
+  render();
+}
+
+// ── Export / Import ──
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lightgantt_' + fmt(new Date()) + '.json';
+  a.click();
+}
+
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data)) { tasks = data; saveTasks(); render(); }
+    } catch { alert('Fichier JSON invalide'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ── Today ──
+function goToToday() {
+  const range = getRange();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const off = daysBetween(range.start, today) * cellWidth;
+  const panel = document.getElementById('ganttPanel');
+  panel.scrollLeft = Math.max(0, off - panel.clientWidth / 2);
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Sync scroll ──
+document.getElementById('ganttPanel').addEventListener('scroll', function() {
+  const scrollTop = this.scrollTop;
+  document.getElementById('taskList').scrollTop = scrollTop;
+});
+document.getElementById('taskList').addEventListener('scroll', function() {
+  document.getElementById('ganttPanel').scrollTop = this.scrollTop;
+});
+
+// ── Init ──
+loadTasks();
+render();
+goToToday();
+</script>
+</body>
+</html>
