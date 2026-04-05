@@ -129,6 +129,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .modal-row-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px; }
 .modal-row-3 > div, .modal-row-4 > div { display:flex; flex-direction:column; }
 .modal-row-3 label, .modal-row-4 label { margin-top:0!important; }
+.dependencies-actions { display:flex; justify-content:flex-end; margin-top:6px; }
+.btn-clear-deps { background:rgba(255,255,255,0.07); border:1px solid var(--border); color:var(--text2); border-radius:6px; padding:6px 10px; cursor:pointer; font-size:12px; }
+.btn-clear-deps:hover { background:rgba(255,255,255,0.12); color:var(--text); }
 .modal .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
 .modal .modal-actions button { padding:8px 18px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:13px; }
 .modal .btn-save { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
@@ -303,6 +306,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     </div>
     <label>Dépendances</label>
     <select id="taskDependencies" multiple></select>
+    <div class="dependencies-actions">
+      <button type="button" class="btn-clear-deps" onclick="clearDependencySelection()">Désélectionner</button>
+    </div>
     <label>Couleur</label>
     <div class="color-options" id="colorOptions"></div>
     <div class="modal-actions">
@@ -1231,6 +1237,11 @@ function renderDependencySelect(task) {
     .filter(item => item.id !== currentId && (item.application || 'Sans application') === currentApp)
     .map(item => `<option value="${item.id}" ${selected.has(item.id) ? 'selected' : ''}>${escapeHtml(item.name)}</option>`)
     .join('');
+}
+
+function clearDependencySelection() {
+  const select = document.getElementById('taskDependencies');
+  [...select.options].forEach(option => { option.selected = false; });
 }
 
 function saveTask() {
