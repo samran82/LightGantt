@@ -164,14 +164,18 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .task-panel-footer .inline-add-button { width:30px; height:30px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-size:18px; line-height:1; cursor:pointer; transition: filter .15s, transform .15s; }
 .task-panel-footer .inline-add-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
 .task-panel-footer .inline-add-button:active { transform:translateY(0); }
-.task-panel-footer .inline-add-button { grid-column: 1; grid-row: 1 / span 3; align-self:stretch; height:auto; }
-.task-panel-footer .line1-task { grid-column: 2 / span 2; grid-row: 1; }
-.task-panel-footer .line1-start { grid-column: 4 / span 2; grid-row: 1; }
-.task-panel-footer .line1-end { grid-column: 6 / span 2; grid-row: 1; }
-.task-panel-footer .line2-application { grid-column: 2 / span 3; grid-row: 2; }
-.task-panel-footer .line2-cc { grid-column: 5 / span 3; grid-row: 2; }
-.task-panel-footer .line3-porteur { grid-column: 2 / span 4; grid-row: 3; }
-.task-panel-footer .line3-etp { grid-column: 6 / span 2; grid-row: 3; }
+.task-panel-footer .inline-add-button { grid-column: 1; grid-row: 2 / span 3; align-self:stretch; height:auto; }
+.task-panel-footer .line1-task { grid-column: 2 / span 2; grid-row: 2; }
+.task-panel-footer .line1-start { grid-column: 4 / span 2; grid-row: 2; }
+.task-panel-footer .line1-end { grid-column: 6 / span 2; grid-row: 2; }
+.task-panel-footer .line2-application { grid-column: 2 / span 3; grid-row: 3; }
+.task-panel-footer .line2-cc { grid-column: 5 / span 3; grid-row: 3; }
+.task-panel-footer .line3-porteur { grid-column: 2 / span 4; grid-row: 4; }
+.task-panel-footer .line3-etp { grid-column: 6 / span 2; grid-row: 4; }
+.task-panel-footer .footer-form-header { grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
+.task-panel-footer .footer-form-header span { font-size:12px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; }
+.task-panel-footer .footer-collapse-btn { background:none; border:none; color:var(--text2); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:4px; line-height:1; transition:background .15s, color .15s; }
+.task-panel-footer .footer-collapse-btn:hover { background:rgba(255,255,255,0.08); color:var(--text); }
 
 @media (max-width: 980px) {
   .main { flex-direction:column; }
@@ -183,14 +187,14 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   .toolbar { padding:8px 10px; gap:8px; }
   .title-block { width:100%; }
   .task-panel-footer .footer-form { grid-template-columns: 36px repeat(2, minmax(0, 1fr)); }
-  .task-panel-footer .inline-add-button { width:32px; grid-column:1; grid-row:1 / span 6; }
-  .task-panel-footer .line1-task { grid-column:2 / span 2; grid-row:1; }
-  .task-panel-footer .line1-start { grid-column:2 / span 2; grid-row:2; }
-  .task-panel-footer .line1-end { grid-column:2 / span 2; grid-row:3; }
-  .task-panel-footer .line2-application { grid-column:2 / span 2; grid-row:4; }
-  .task-panel-footer .line2-cc { grid-column:2 / span 2; grid-row:5; }
-  .task-panel-footer .line3-porteur { grid-column:2 / span 2; grid-row:6; }
-  .task-panel-footer .line3-etp { grid-column:2 / span 2; grid-row:7; }
+  .task-panel-footer .inline-add-button { width:32px; grid-column:1; grid-row:2 / span 6; }
+  .task-panel-footer .line1-task { grid-column:2 / span 2; grid-row:2; }
+  .task-panel-footer .line1-start { grid-column:2 / span 2; grid-row:3; }
+  .task-panel-footer .line1-end { grid-column:2 / span 2; grid-row:4; }
+  .task-panel-footer .line2-application { grid-column:2 / span 2; grid-row:5; }
+  .task-panel-footer .line2-cc { grid-column:2 / span 2; grid-row:6; }
+  .task-panel-footer .line3-porteur { grid-column:2 / span 2; grid-row:7; }
+  .task-panel-footer .line3-etp { grid-column:2 / span 2; grid-row:8; }
   .modal-row-3 { grid-template-columns:1fr 1fr; }
   .modal-row-4 { grid-template-columns:1fr 1fr; }
   .modal { width:96vw; padding:14px; max-height:90vh; border-radius:10px; }
@@ -247,6 +251,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <div class="task-panel-footer collapsed" id="taskPanelFooter">
       <button class="footer-toggle-btn" onclick="toggleInlineForm()"><span class="toggle-icon">+</span> Nouvelle tâche rapide</button>
       <div class="footer-form">
+        <div class="footer-form-header">
+          <span>Nouvelle tâche rapide</span>
+          <button class="footer-collapse-btn" onclick="toggleInlineForm()" title="Réduire">✕</button>
+        </div>
         <button class="inline-add-button" onclick="createInlineTask()" aria-label="Ajouter une tâche">+</button>
         <input class="line1-task" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
         <input class="line1-start" type="date" id="inlineTaskStart">
