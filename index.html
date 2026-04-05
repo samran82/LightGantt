@@ -28,10 +28,16 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .toolbar button:hover, .toolbar select:hover { background:var(--accent2); }
 .toolbar .btn-add { background:var(--accent); border-color:var(--accent); font-weight:600; }
 .toolbar .btn-add:hover { background:#c73a52; }
+.filter-row { display:flex; align-items:center; gap:8px; }
+.filter-label { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
 .filter-chip { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .filter-chip .filter-btn { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text2); border-radius:999px; padding:4px 10px; font-size:12px; cursor:pointer; transition:all .15s; }
 .filter-chip .filter-btn:hover { background:rgba(255,255,255,0.12); color:var(--text); }
 .filter-chip .filter-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+/* Custom autocomplete */
+.ac-dropdown { position:fixed; z-index:500; background:var(--surface2); border:1px solid var(--border); border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.4); overflow-y:auto; max-height:180px; }
+.ac-option { padding:7px 12px; font-size:13px; color:var(--text); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ac-option:hover { background:var(--row-hover); color:#fff; }
 
 /* Main layout */
 .main { display:flex; flex:1; overflow:hidden; }
@@ -79,6 +85,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .gantt-bar.dragging-reorder { filter:brightness(1.12); box-shadow:0 12px 28px rgba(0,0,0,.3); cursor:ns-resize; }
 .gantt-bar.reorder-animating { z-index:4; }
 .gantt-bar .bar-progress { position:absolute; left:0; top:0; height:100%; border-radius:5px; background:rgba(255,255,255,0.2); pointer-events:none; }
+.gantt-bar .bar-remaining-days { position:absolute; top:2px; height:18px; padding:0 6px; border-radius:10px; background:rgba(0,0,0,0.38); border:1px solid rgba(255,255,255,0.24); color:#fff; font-size:10px; font-weight:700; line-height:18px; text-shadow:none; white-space:nowrap; pointer-events:none; z-index:3; transform:translateX(-50%); }
 .gantt-bar .reorder-handle { position:absolute; left:6px; top:4px; bottom:4px; width:12px; border-radius:4px; background:rgba(255,255,255,0.14); cursor:ns-resize; display:flex; align-items:center; justify-content:center; font-size:9px; letter-spacing:-1px; color:rgba(255,255,255,0.9); text-shadow:none; z-index:2; }
 .gantt-bar .reorder-handle:hover { background:rgba(255,255,255,0.24); }
 .gantt-bar .resize-handle { position:absolute; top:0; width:8px; height:100%; cursor:col-resize; pointer-events:all; }
@@ -87,8 +94,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .today-line { position:absolute; top:0; bottom:0; width:2px; background:var(--accent); z-index:5; pointer-events:none; }
 
 /* Bar extension date fin */
-.bar-extension { position:absolute; top:0; height:100%; background:#ff3333; border-radius:0 5px 5px 0; pointer-events:none; z-index:1; opacity:0.82; }
-.gantt-bar.long-press-active { outline:2px solid rgba(255,255,255,0.65); outline-offset:1px; }
+.bar-extension { position:absolute; top:0; height:100%; background:var(--extension-color, #ff3333); border-radius:0 5px 5px 0; pointer-events:none; z-index:1; opacity:0.9; overflow:hidden; }
+.bar-extension-progress { position:absolute; top:0; bottom:0; left:0; background:repeating-linear-gradient(-45deg, rgba(255,255,255,0.75) 0 4px, rgba(255,255,255,0.35) 4px 8px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
 /* Jalons Gantt */
 .milestone-marker { position:absolute; width:14px; height:14px; background:#ffd166; transform:rotate(45deg); pointer-events:all; cursor:pointer; z-index:6; border:1px solid rgba(0,0,0,0.5); box-shadow:0 2px 6px rgba(0,0,0,0.4); }
 .milestone-marker:hover { filter:brightness(1.45); }
@@ -109,6 +116,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .modal input, .modal select, .modal textarea { width:100%; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px; outline:none; }
 .modal select[multiple] { min-height:110px; }
 .modal input:focus, .modal select:focus { border-color:var(--accent); }
+.modal-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px; }
+.modal-row-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px; }
+.modal-row-3 > div, .modal-row-4 > div { display:flex; flex-direction:column; }
+.modal-row-3 label, .modal-row-4 label { margin-top:0!important; }
 .modal .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
 .modal .modal-actions button { padding:8px 18px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:13px; }
 .modal .btn-save { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
@@ -165,6 +176,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   .task-panel-footer .line2-cc { grid-column:2 / span 2; grid-row:5; }
   .task-panel-footer .line3-porteur { grid-column:2 / span 2; grid-row:6; }
   .task-panel-footer .line3-etp { grid-column:2 / span 2; grid-row:7; }
+  .modal-row-3 { grid-template-columns:1fr 1fr; }
+  .modal-row-4 { grid-template-columns:1fr 1fr; }
   .modal { width:96vw; padding:14px; max-height:90vh; border-radius:10px; }
   .modal h2 { margin-bottom:12px; }
   .modal .modal-actions { position:sticky; bottom:-14px; background:var(--surface); padding-top:10px; }
@@ -184,13 +197,16 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 <div class="toolbar">
   <div class="title-block">
     <h1>LightGantt</h1>
-    <div class="filter-chip" id="ccFilterButtons"></div>
+    <div class="filter-row"><span class="filter-label">Team:</span><div class="filter-chip" id="teamFilterButtons"></div></div>
+    <div class="filter-row"><span class="filter-label">CC:</span><div class="filter-chip" id="ccFilterButtons"></div></div>
   </div>
   <select id="zoomLevel" onchange="changeZoom(this.value)">
     <option value="day">Jour</option>
     <option value="week" selected>Semaine</option>
     <option value="month">Mois</option>
   </select>
+  <label for="extensionColorPicker" style="font-size:12px;color:var(--text2);margin-left:10px;">Couleur extension:</label>
+  <input type="color" id="extensionColorPicker" value="#ff3333" onchange="setExtensionColor(this.value)" style="width:40px;height:32px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
   <button onclick="exportJSON()">⬇ Export</button>
   <button onclick="document.getElementById('importInput').click()">⬆ Import</button>
   <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
@@ -210,9 +226,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
       <input class="line1-task" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
       <input class="line1-start" type="date" id="inlineTaskStart">
       <input class="line1-end" type="date" id="inlineTaskEnd">
-      <input class="line2-application" type="text" id="inlineTaskApplication" placeholder="Application" list="applicationList" autocomplete="off">
-      <input class="line2-cc" type="text" id="inlineTaskCc" placeholder="CC" list="ccList" autocomplete="off">
-      <input class="line3-porteur" type="text" id="inlineTaskPorteur" placeholder="Porteur">
+      <input class="line2-application" type="text" id="inlineTaskApplication" placeholder="Team RS/TL" data-ac="application">
+      <input class="line2-cc" type="text" id="inlineTaskCc" placeholder="CC" data-ac="cc">
+      <input class="line3-porteur" type="text" id="inlineTaskPorteur" placeholder="Lead" data-ac="porteur">
       <input class="line3-etp" type="number" id="inlineTaskEtp" placeholder="ETP" min="0" step="0.1">
     </div>
   </div>
@@ -223,8 +239,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   </div>
 </div>
 
-<datalist id="applicationList"></datalist>
-<datalist id="ccList"></datalist>
+<div id="acDropdown" class="ac-dropdown" style="display:none"></div>
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
@@ -233,30 +248,29 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <input type="hidden" id="taskId">
     <label>Nom</label>
     <input type="text" id="taskName" placeholder="Nom de la tâche">
-    <label>Date de début</label>
-    <input type="date" id="taskStart">
-    <label>Date de fin</label>
-    <input type="date" id="taskEnd">
-    <label>Application</label>
-    <input type="text" id="taskApplication" placeholder="Nom de l'application" list="applicationList" autocomplete="off">
-    <label>CC</label>
-    <input type="text" id="taskCc" placeholder="Centre de compétences" list="ccList" autocomplete="off">
-    <label>Porteur</label>
-    <input type="text" id="taskPorteur" placeholder="Nom du porteur">
-    <label>ETP</label>
-    <input type="number" id="taskEtp" min="0" step="0.1" placeholder="Ex: 0.5">
-    <label>Dépendances</label>
-    <select id="taskDependencies" multiple></select>
-    <label>Progression</label>
-    <div class="progress-container">
-      <input type="range" id="taskProgress" min="0" max="100" value="0" oninput="document.getElementById('progressVal').textContent=this.value+'%'">
-      <span id="progressVal">0%</span>
+    <div class="modal-row-3">
+      <div><label>Début</label><input type="date" id="taskStart"></div>
+      <div><label>Fin</label><input type="date" id="taskEnd"></div>
+      <div><label>Progression</label>
+        <div class="progress-container">
+          <input type="range" id="taskProgress" min="0" max="100" value="0" oninput="document.getElementById('progressVal').textContent=this.value+'%'">
+          <span id="progressVal">0%</span>
+        </div>
+      </div>
     </div>
-    <label>Couleur</label>
-    <div class="color-options" id="colorOptions"></div>
     <label>Jalons</label>
     <div id="milestoneList"></div>
     <button type="button" class="btn-add-milestone" onclick="addMilestoneRow()">+ Ajouter un jalon</button>
+    <div class="modal-row-4">
+      <div><label>Team RS/TL</label><input type="text" id="taskApplication" placeholder="Team RS/TL" data-ac="application" oninput="renderDependencySelect(null)"></div>
+      <div><label>CC</label><input type="text" id="taskCc" placeholder="CC" data-ac="cc"></div>
+      <div><label>Lead</label><input type="text" id="taskPorteur" placeholder="Lead" data-ac="porteur"></div>
+      <div><label>ETP</label><input type="number" id="taskEtp" min="0" step="0.1" placeholder="Ex: 0.5"></div>
+    </div>
+    <label>Dépendances</label>
+    <select id="taskDependencies" multiple></select>
+    <label>Couleur</label>
+    <div class="color-options" id="colorOptions"></div>
     <div class="modal-actions">
       <button class="btn-delete" id="btnDelete" onclick="deleteTask()" style="display:none">Supprimer</button>
       <button class="btn-cancel" onclick="closeModal()">Annuler</button>
@@ -279,9 +293,10 @@ let dragState = null;
 let reorderState = null;
 let pendingBarAnimation = null;
 let ccFilters = new Set();
+let teamFilters = new Set();
 let tooltipTaskId = null;
-let longPressTimer = null;
-let longPressCleanup = null;
+let acCurrentInput = null;
+let extensionColor = '#ff3333';
 
 // ── Persistence ──
 function loadTasks() {
@@ -301,6 +316,19 @@ function loadTasks() {
   repairDependencies();
 }
 function saveTasks() { localStorage.setItem('lightgantt_tasks', JSON.stringify(tasks)); }
+function loadExtensionColor() { 
+  const saved = localStorage.getItem('lightgantt_extensionColor');
+  if (saved) extensionColor = saved;
+  document.getElementById('extensionColorPicker').value = extensionColor;
+  document.documentElement.style.setProperty('--extension-color', extensionColor);
+}
+function saveExtensionColor(color) { localStorage.setItem('lightgantt_extensionColor', color); }
+function setExtensionColor(color) {
+  extensionColor = color;
+  saveExtensionColor(color);
+  document.documentElement.style.setProperty('--extension-color', color);
+  render();
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function fmt(d) { return d.toISOString().split('T')[0]; }
 function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
@@ -316,6 +344,7 @@ function normalizeTask(task) {
     etp: Number.isFinite(parsedEtp) ? parsedEtp : null,
     start: task.start,
     end: task.end,
+    plannedEnd: task.plannedEnd || task.end,
     progress: Number.isFinite(task.progress) ? task.progress : parseInt(task.progress || 0, 10) || 0,
     color: task.color || COLORS[0],
     dependencies: Array.isArray(task.dependencies) ? [...new Set(task.dependencies.filter(Boolean))] : [],
@@ -331,8 +360,11 @@ function repairDependencies() {
 }
 
 function getVisibleTasks() {
-  if (ccFilters.size === 0) return tasks;
-  return tasks.filter(task => ccFilters.has(task.cc || 'Sans CC'));
+  return tasks.filter(task => {
+    const ccOk = ccFilters.size === 0 || ccFilters.has(task.cc || 'Sans CC');
+    const teamOk = teamFilters.size === 0 || teamFilters.has(task.application || 'Sans application');
+    return ccOk && teamOk;
+  });
 }
 
 function getGroupedVisibleRows() {
@@ -362,6 +394,27 @@ function getVisibleTaskIndexMap() {
   return map;
 }
 
+function syncTeamFilterOptions() {
+  const container = document.getElementById('teamFilterButtons');
+  const teamValues = [...new Set(tasks.map(task => task.application || 'Sans application'))].sort((a, b) => a.localeCompare(b, 'fr'));
+  teamFilters = new Set([...teamFilters].filter(t => teamValues.includes(t)));
+  const options = ['all', ...teamValues];
+  container.innerHTML = options.map(value => {
+    const label = value === 'all' ? 'Toutes les Teams' : value;
+    const active = value === 'all' ? (teamFilters.size === 0 ? ' active' : '') : (teamFilters.has(value) ? ' active' : '');
+    return `<button class="filter-btn${active}" data-value="${escapeHtml(value)}" onclick="changeTeamFilterFromButton(this)">${escapeHtml(label)}</button>`;
+  }).join('');
+}
+
+function changeTeamFilterFromButton(button) { changeTeamFilter(button.dataset.value || 'all'); }
+
+function changeTeamFilter(value) {
+  if (value === 'all') { teamFilters.clear(); }
+  else if (teamFilters.has(value)) { teamFilters.delete(value); }
+  else { teamFilters.add(value); }
+  render();
+}
+
 function syncCcFilterOptions() {
   const container = document.getElementById('ccFilterButtons');
   const ccValues = [...new Set(tasks.map(task => task.cc || 'Sans CC'))].sort((a, b) => a.localeCompare(b, 'fr'));
@@ -379,12 +432,57 @@ function changeCcFilterFromButton(button) {
   changeCcFilter(button.dataset.value || 'all');
 }
 
-function syncDatalistOptions() {
-  const applications = [...new Set(tasks.map(t => t.application).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-  const ccValues = [...new Set(tasks.map(t => t.cc).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-  document.getElementById('applicationList').innerHTML = applications.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
-  document.getElementById('ccList').innerHTML = ccValues.map(v => `<option value="${escapeHtml(v)}"></option>`).join('');
+// ── Autocomplete ──
+function acGetOptions(type) {
+  switch(type) {
+    case 'application': return [...new Set(tasks.map(t => t.application).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
+    case 'cc':          return [...new Set(tasks.map(t => t.cc).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
+    case 'porteur':     return [...new Set(tasks.map(t => t.porteur).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
+    default: return [];
+  }
 }
+
+function acShow(input) {
+  const type = input.dataset.ac;
+  if (!type) return;
+  const val = input.value.toLowerCase().trim();
+  const opts = acGetOptions(type).filter(o => !val || o.toLowerCase().includes(val));
+  const drop = document.getElementById('acDropdown');
+  if (!opts.length) { acHide(); return; }
+  const rect = input.getBoundingClientRect();
+  drop.style.left = rect.left + 'px';
+  drop.style.top = (rect.bottom + 2) + 'px';
+  drop.style.width = Math.max(rect.width, 140) + 'px';
+  drop.style.display = 'block';
+  drop.innerHTML = opts.map(o => `<div class="ac-option" data-val="${escapeHtml(o)}">${escapeHtml(o)}</div>`).join('');
+  drop.querySelectorAll('.ac-option').forEach(el => {
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      input.value = el.dataset.val;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      acHide();
+    });
+  });
+  acCurrentInput = input;
+}
+
+function acHide() {
+  const drop = document.getElementById('acDropdown');
+  if (drop) drop.style.display = 'none';
+  acCurrentInput = null;
+}
+
+document.addEventListener('focusin', e => {
+  if (e.target.dataset && e.target.dataset.ac) { acCurrentInput = e.target; acShow(e.target); }
+  else if (!e.target.closest('#acDropdown')) acHide();
+});
+document.addEventListener('input', e => {
+  if (e.target.dataset && e.target.dataset.ac) acShow(e.target);
+});
+document.addEventListener('focusout', e => {
+  if (e.target.dataset && e.target.dataset.ac) setTimeout(acHide, 120);
+});
 
 function changeCcFilter(value) {
   if (value === 'all') {
@@ -461,10 +559,25 @@ function getRange() {
 }
 function daysBetween(a,b) { return Math.round((b-a)/86400000); }
 
+function countWorkingDays(startDate, endDate) {
+  if (endDate < startDate) return 0;
+  const cur = new Date(startDate);
+  cur.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  let count = 0;
+  while (cur <= end) {
+    const day = cur.getDay();
+    if (day !== 0 && day !== 6) count++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
+}
+
 // ── Render ──
 function render() {
+  syncTeamFilterOptions();
   syncCcFilterOptions();
-  syncDatalistOptions();
   renderTaskList();
   renderGantt();
 }
@@ -590,24 +703,45 @@ function renderGantt() {
       dragClass = dragState.mode === 'reorder' ? ' dragging-reorder' : (dragState.mode === 'resize-right' || dragState.mode === 'resize-left') ? ' dragging-time' : '';
     }
     const ccLabel = t.cc || 'Sans CC';
-    // Extension rouge lors du resize-right
+    // Extension rouge persistante si end > plannedEnd
     let extensionHtml = '';
-    if (dragState && dragState.id === t.id && dragState.mode === 'resize-right') {
-      const origEndDate = parseDate(dragState.origEnd);
-      const curEndDate = parseDate(t.end);
-      if (curEndDate > origEndDate) {
-        const origRightX = (daysBetween(range.start, origEndDate) + 1) * cellWidth;
-        const extLeft = origRightX - left;
-        const extWidth = (daysBetween(range.start, curEndDate) + 1) * cellWidth - origRightX;
-        if (extWidth > 0) extensionHtml = `<div class="bar-extension" style="left:${extLeft}px;width:${extWidth}px"></div>`;
+    const progressRatio = Math.max(0, Math.min(100, t.progress)) / 100;
+    const progressPx = width * progressRatio;
+    const plannedEndDate = parseDate(t.plannedEnd || t.end);
+    const curEndDate = parseDate(t.end);
+    if (curEndDate > plannedEndDate) {
+      const origRightX = (daysBetween(range.start, plannedEndDate) + 1) * cellWidth;
+      const extLeft = origRightX - left;
+      const extWidth = (daysBetween(range.start, curEndDate) + 1) * cellWidth - origRightX;
+      if (extWidth > 0) {
+        const overlapWidth = Math.max(0, Math.min(progressPx, extLeft + extWidth) - extLeft);
+        const progressOverlay = overlapWidth > 0 ? `<div class="bar-extension-progress" style="width:${overlapWidth}px"></div>` : '';
+        extensionHtml = `<div class="bar-extension" style="left:${extLeft}px;width:${extWidth}px">${progressOverlay}</div>`;
       }
     }
+
+    let remainingDaysHtml = '';
+    const totalDays = daysBetween(s, e) + 1;
+    const completedDays = Math.floor(totalDays * progressRatio);
+    const nonProgressWidth = width - progressPx;
+    if (completedDays < totalDays && nonProgressWidth >= 34) {
+      const remainingStart = new Date(s);
+      remainingStart.setDate(remainingStart.getDate() + completedDays);
+      const remainingWorkDays = countWorkingDays(remainingStart, e);
+      if (remainingWorkDays > 0) {
+        const label = `${remainingWorkDays} JO`;
+        const labelCenter = progressPx + (nonProgressWidth / 2);
+        remainingDaysHtml = `<div class="bar-remaining-days" style="left:${labelCenter}px">${label}</div>`;
+      }
+    }
+
     html += `<div class="gantt-bar${dragClass}" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}"
       onmouseenter="showTaskTooltip(event,'${t.id}')"
       onmousemove="moveTaskTooltip(event)"
       onmouseleave="hideTaskTooltip()"
-      onmousedown="startBarLongPress(event,'${t.id}')">
+      ondblclick="openModal('${t.id}')">
       <div class="bar-progress" style="width:${t.progress}%"></div>
+      ${remainingDaysHtml}
       <div class="reorder-handle" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','reorder')">::</div>
       <div class="resize-handle left" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-left')"></div>
       <div class="resize-handle right" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-right')"></div>
@@ -625,7 +759,7 @@ function renderGantt() {
     t.milestones.forEach(m => {
       if (!m.date) return;
       const mLeft = daysBetween(range.start, parseDate(m.date)) * cellWidth + cellWidth / 2 - 7;
-      const mTop = idx * ROW_HEIGHT + 11;
+      const mTop = idx * ROW_HEIGHT + 24;
       html += `<div class="milestone-marker" style="left:${mLeft}px;top:${mTop}px" data-mname="${escapeHtml(m.name)}" data-mdate="${escapeHtml(m.date)}" onmouseenter="showMilestoneTooltip(event,this)" onmousemove="moveTaskTooltip(event)" onmouseleave="hideTaskTooltip()"></div>`;
     });
   });
@@ -679,9 +813,9 @@ function buildTaskTooltipHtml(task) {
   const depsLabel = deps.length ? escapeHtml(deps.join(', ')) : 'Aucune';
   return `
     <div class="tt-title">${escapeHtml(task.name)}</div>
-    <div class="tt-line"><strong>Application:</strong> ${escapeHtml(task.application)}</div>
+    <div class="tt-line"><strong>Team RS/TL:</strong> ${escapeHtml(task.application)}</div>
     <div class="tt-line"><strong>CC:</strong> ${escapeHtml(ccLabel)}</div>
-    <div class="tt-line"><strong>Porteur:</strong> ${escapeHtml(porteurLabel)}</div>
+    <div class="tt-line"><strong>Lead:</strong> ${escapeHtml(porteurLabel)}</div>
     <div class="tt-line"><strong>ETP:</strong> ${escapeHtml(etpLabel)}</div>
     <div class="tt-line"><strong>Début:</strong> ${escapeHtml(task.start)}</div>
     <div class="tt-line"><strong>Fin:</strong> ${escapeHtml(task.end)}</div>
@@ -739,6 +873,7 @@ function startDrag(e, id, mode) {
     startY: e.clientY,
     origStart: task.start,
     origEnd: task.end,
+    origProgress: task.progress,
     origIndex: tasks.findIndex(t => t.id === id),
   };
   document.addEventListener('mousemove', onDrag);
@@ -760,7 +895,15 @@ function onDrag(e) {
     reorderTaskFromBarDrag(e.clientY);
   } else if (dragState.mode === 'resize-right') {
     const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
-    if (ne >= origS) task.end = fmt(ne);
+    if (ne >= origS) {
+      task.end = fmt(ne);
+      // Réévalue la progression : conserve les JO réalisés, recalcule sur la nouvelle durée
+      const joTotal = countWorkingDays(origS, ne);
+      if (joTotal > 0) {
+        const joRealises = Math.round(dragState.origProgress / 100 * countWorkingDays(origS, origE));
+        task.progress = Math.min(100, Math.round(joRealises / joTotal * 100));
+      }
+    }
   } else if (dragState.mode === 'resize-left') {
     const ns = new Date(origS); ns.setDate(ns.getDate()+dayDelta);
     if (ns <= origE) task.start = fmt(ns);
@@ -1037,10 +1180,12 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 
 function renderDependencySelect(task) {
   const select = document.getElementById('taskDependencies');
-  const selected = new Set(task ? task.dependencies : []);
+  const selected = task ? new Set(task.dependencies) : new Set([...select.selectedOptions].map(o => o.value));
+  const currentId = document.getElementById('taskId').value;
+  const currentApp = (document.getElementById('taskApplication').value.trim() || (task ? task.application : '')) || 'Sans application';
   select.innerHTML = tasks
-    .filter(item => !task || item.id !== task.id)
-    .map(item => `<option value="${item.id}" ${selected.has(item.id) ? 'selected' : ''}>${escapeHtml(item.application)} - ${escapeHtml(item.name)}</option>`)
+    .filter(item => item.id !== currentId && (item.application || 'Sans application') === currentApp)
+    .map(item => `<option value="${item.id}" ${selected.has(item.id) ? 'selected' : ''}>${escapeHtml(item.name)}</option>`)
     .join('');
 }
 
@@ -1065,9 +1210,11 @@ function saveTask() {
 
   if (id) {
     const t = tasks.find(t => t.id === id);
-    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, etp, start, end, progress, color, dependencies, milestones })); }
+    // Réinitialise plannedEnd si la date de fin a été modifiée explicitement dans la modal
+    const newPlannedEnd = (t && t.end !== end) ? end : (t ? t.plannedEnd : end);
+    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, etp, start, end, plannedEnd: newPlannedEnd, progress, color, dependencies, milestones })); }
   } else {
-    createTask({ name, application, cc, porteur, etp, start, end, progress, color, dependencies, milestones });
+    createTask({ name, application, cc, porteur, etp, start, end, plannedEnd: end, progress, color, dependencies, milestones });
     closeModal();
     return;
   }
@@ -1149,40 +1296,6 @@ function getMilestonesFromModal() {
     date: row.querySelector('.milestone-date').value,
     name: row.querySelector('.milestone-name').value.trim(),
   })).filter(m => m.date && m.name);
-}
-
-// ── Long press barre Gantt ──
-function startBarLongPress(e, id) {
-  if (e.button !== 0) return;
-  e.preventDefault();
-  clearBarLongPress();
-  const startX = e.clientX;
-  const startY = e.clientY;
-  const onMove = mv => {
-    if (Math.abs(mv.clientX - startX) > 6 || Math.abs(mv.clientY - startY) > 6) clearBarLongPress();
-  };
-  const onUp = () => clearBarLongPress();
-  longPressCleanup = () => {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-    document.querySelectorAll('.gantt-bar.long-press-active').forEach(el => el.classList.remove('long-press-active'));
-  };
-  longPressTimer = setTimeout(() => {
-    const cleanup = longPressCleanup;
-    longPressTimer = null;
-    longPressCleanup = null;
-    if (cleanup) cleanup();
-    openModal(id);
-  }, 600);
-  const bar = document.querySelector(`.gantt-bar[data-id="${id}"]`);
-  if (bar) bar.classList.add('long-press-active');
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-}
-
-function clearBarLongPress() {
-  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-  if (longPressCleanup) { longPressCleanup(); longPressCleanup = null; }
 }
 
 // ── Cascade dépendances ──
@@ -1285,6 +1398,7 @@ document.getElementById('taskList').addEventListener('scroll', function() {
 
 // ── Init ──
 loadTasks();
+loadExtensionColor();
 resetInlineTaskForm();
 render();
 goToToday();
