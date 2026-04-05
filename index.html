@@ -152,7 +152,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .progress-container span { font-size:13px; min-width:36px; }
 
 /* Add task footer */
-.task-panel-footer { padding:10px 8px; border-top:1px solid var(--border); flex-shrink:0; display:grid; grid-template-columns: 40px repeat(6, minmax(0, 1fr)); gap:6px; align-items:center; background:rgba(255,255,255,0.02); }
+.task-panel-footer { border-top:1px solid var(--border); flex-shrink:0; background:rgba(255,255,255,0.02); }
+.task-panel-footer .footer-toggle-btn { display:flex; width:100%; padding:9px 14px; background:none; border:none; color:var(--text2); font-size:13px; cursor:pointer; gap:8px; align-items:center; transition:background .15s, color .15s; text-align:left; }
+.task-panel-footer .footer-toggle-btn:hover { background:rgba(255,255,255,0.05); color:var(--text); }
+.task-panel-footer .footer-toggle-btn .toggle-icon { font-size:18px; color:var(--accent); line-height:1; font-weight:700; }
+.task-panel-footer.collapsed .footer-form { display:none; }
+.task-panel-footer:not(.collapsed) .footer-toggle-btn { display:none; }
+.task-panel-footer .footer-form { display:grid; grid-template-columns: 40px repeat(6, minmax(0, 1fr)); gap:6px; align-items:center; padding:10px 8px; }
 .task-panel-footer input { width:100%; min-width:0; height:30px; padding:0 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; }
 .task-panel-footer input:focus { border-color:var(--accent); }
 .task-panel-footer .inline-add-button { width:30px; height:30px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-size:18px; line-height:1; cursor:pointer; transition: filter .15s, transform .15s; }
@@ -176,7 +182,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 @media (max-width: 760px) {
   .toolbar { padding:8px 10px; gap:8px; }
   .title-block { width:100%; }
-  .task-panel-footer { grid-template-columns: 36px repeat(2, minmax(0, 1fr)); }
+  .task-panel-footer .footer-form { grid-template-columns: 36px repeat(2, minmax(0, 1fr)); }
   .task-panel-footer .inline-add-button { width:32px; grid-column:1; grid-row:1 / span 6; }
   .task-panel-footer .line1-task { grid-column:2 / span 2; grid-row:1; }
   .task-panel-footer .line1-start { grid-column:2 / span 2; grid-row:2; }
@@ -238,15 +244,18 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
       <span></span><span>Tâche</span><span>Début</span><span>Fin</span>
     </div>
     <div class="task-list" id="taskList" ondragover="onTaskListDragOver(event)" ondrop="dropTaskAtEnd(event)"></div>
-    <div class="task-panel-footer">
-      <button class="inline-add-button" onclick="createInlineTask()" aria-label="Ajouter une tâche">+</button>
-      <input class="line1-task" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
-      <input class="line1-start" type="date" id="inlineTaskStart">
-      <input class="line1-end" type="date" id="inlineTaskEnd">
-      <input class="line2-application" type="text" id="inlineTaskApplication" placeholder="Team RS/TL" data-ac="application">
-      <input class="line2-cc" type="text" id="inlineTaskCc" placeholder="CC" data-ac="cc">
-      <input class="line3-porteur" type="text" id="inlineTaskPorteur" placeholder="Lead" data-ac="porteur">
-      <input class="line3-etp" type="number" id="inlineTaskEtp" placeholder="ETP" min="0" step="0.1">
+    <div class="task-panel-footer collapsed" id="taskPanelFooter">
+      <button class="footer-toggle-btn" onclick="toggleInlineForm()"><span class="toggle-icon">+</span> Nouvelle tâche rapide</button>
+      <div class="footer-form">
+        <button class="inline-add-button" onclick="createInlineTask()" aria-label="Ajouter une tâche">+</button>
+        <input class="line1-task" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
+        <input class="line1-start" type="date" id="inlineTaskStart">
+        <input class="line1-end" type="date" id="inlineTaskEnd">
+        <input class="line2-application" type="text" id="inlineTaskApplication" placeholder="Team RS/TL" data-ac="application">
+        <input class="line2-cc" type="text" id="inlineTaskCc" placeholder="CC" data-ac="cc">
+        <input class="line3-porteur" type="text" id="inlineTaskPorteur" placeholder="Lead" data-ac="porteur">
+        <input class="line3-etp" type="number" id="inlineTaskEtp" placeholder="ETP" min="0" step="0.1">
+      </div>
     </div>
   </div>
   <!-- Gantt Chart -->
@@ -333,6 +342,9 @@ function loadTasks() {
   repairDependencies();
 }
 function saveTasks() { localStorage.setItem('lightgantt_tasks', JSON.stringify(tasks)); }
+function toggleInlineForm() {
+  document.getElementById('taskPanelFooter').classList.toggle('collapsed');
+}
 function toggleSettingsMenu() {
   document.getElementById('settingsMenu').classList.toggle('open');
 }
