@@ -159,11 +159,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 /* Progress slider */
 .progress-container { display:flex; align-items:center; gap:8px; }
-.progress-container input[type=range] { flex:1; accent-color:var(--accent); }
-.progress-container span { font-size:13px; min-width:36px; text-align:right; }
-.progress-jo { width:38px; padding:4px 4px; text-align:center; font-size:12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); flex-shrink:0; }
-.progress-jo:focus { border-color:var(--accent); outline:none; }
-.progress-jo-label { font-size:12px; color:var(--text2); white-space:nowrap; }
+.progress-container input[type=range] { flex:1; accent-color:var(--accent); min-width:0; }
+.progress-container span { font-size:13px; min-width:30px; text-align:right; flex-shrink:0; }
+.progress-container .progress-jo { width:38px!important; padding:4px 4px; text-align:center; font-size:12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); flex-shrink:0; }
+.progress-container .progress-jo:focus { border-color:var(--accent); outline:none; }
+.progress-jo-label { font-size:12px; color:var(--text2); white-space:nowrap; flex-shrink:0; }
 
 /* Add task footer */
 .task-panel-footer { border-top:1px solid var(--border); flex-shrink:0; background:rgba(255,255,255,0.02); }
