@@ -87,7 +87,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .today-line { position:absolute; top:0; bottom:0; width:2px; background:var(--accent); z-index:5; pointer-events:none; }
 
 /* Bar extension date fin */
-.bar-extension { position:absolute; top:0; height:100%; background:#ff3333; border-radius:0 5px 5px 0; pointer-events:none; z-index:1; opacity:0.82; }
+.bar-extension { position:absolute; top:0; height:100%; background:var(--extension-color, #ff3333); border-radius:0 5px 5px 0; pointer-events:none; z-index:1; opacity:0.82; }
 .gantt-bar.long-press-active { outline:2px solid rgba(255,255,255,0.65); outline-offset:1px; }
 /* Jalons Gantt */
 .milestone-marker { position:absolute; width:14px; height:14px; background:#ffd166; transform:rotate(45deg); pointer-events:all; cursor:pointer; z-index:6; border:1px solid rgba(0,0,0,0.5); box-shadow:0 2px 6px rgba(0,0,0,0.4); }
@@ -191,6 +191,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <option value="week" selected>Semaine</option>
     <option value="month">Mois</option>
   </select>
+  <label for="extensionColorPicker" style="font-size:12px;color:var(--text2);margin-left:10px;">Couleur extension:</label>
+  <input type="color" id="extensionColorPicker" value="#ff3333" onchange="setExtensionColor(this.value)" style="width:40px;height:32px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
   <button onclick="exportJSON()">⬇ Export</button>
   <button onclick="document.getElementById('importInput').click()">⬆ Import</button>
   <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
@@ -282,6 +284,7 @@ let ccFilters = new Set();
 let tooltipTaskId = null;
 let longPressTimer = null;
 let longPressCleanup = null;
+let extensionColor = '#ff3333';
 
 // ── Persistence ──
 function loadTasks() {
@@ -301,6 +304,19 @@ function loadTasks() {
   repairDependencies();
 }
 function saveTasks() { localStorage.setItem('lightgantt_tasks', JSON.stringify(tasks)); }
+function loadExtensionColor() { 
+  const saved = localStorage.getItem('lightgantt_extensionColor');
+  if (saved) extensionColor = saved;
+  document.getElementById('extensionColorPicker').value = extensionColor;
+  document.documentElement.style.setProperty('--extension-color', extensionColor);
+}
+function saveExtensionColor(color) { localStorage.setItem('lightgantt_extensionColor', color); }
+function setExtensionColor(color) {
+  extensionColor = color;
+  saveExtensionColor(color);
+  document.documentElement.style.setProperty('--extension-color', color);
+  render();
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function fmt(d) { return d.toISOString().split('T')[0]; }
 function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
@@ -1285,6 +1301,7 @@ document.getElementById('taskList').addEventListener('scroll', function() {
 
 // ── Init ──
 loadTasks();
+loadExtensionColor();
 resetInlineTaskForm();
 render();
 goToToday();
