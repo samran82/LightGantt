@@ -28,6 +28,14 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .toolbar button:hover, .toolbar select:hover { background:var(--accent2); }
 .toolbar .btn-add { background:var(--accent); border-color:var(--accent); font-weight:600; }
 .toolbar .btn-add:hover { background:#c73a52; }
+/* Settings gear menu */
+.settings-menu { position:relative; }
+.settings-menu .settings-dropdown { display:none; position:absolute; top:calc(100% + 6px); right:0; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,.45); z-index:300; min-width:210px; flex-direction:column; gap:6px; }
+.settings-menu.open .settings-dropdown { display:flex; }
+.settings-dropdown button { width:100%; text-align:left; justify-content:flex-start; padding:7px 12px; border-radius:6px; font-size:13px; }
+.settings-dropdown .color-row { display:flex; align-items:center; gap:8px; padding:4px 8px; color:var(--text2); font-size:13px; }
+.settings-dropdown .color-row input[type=color] { width:36px; height:28px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:none; padding:0; }
+.settings-dropdown .sep { height:1px; background:var(--border); margin:2px 0; }
 .filter-row { display:flex; align-items:center; gap:8px; }
 .filter-label { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
 .filter-chip { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
@@ -205,12 +213,21 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <option value="week" selected>Semaine</option>
     <option value="month">Mois</option>
   </select>
-  <label for="extensionColorPicker" style="font-size:12px;color:var(--text2);margin-left:10px;">Couleur extension:</label>
-  <input type="color" id="extensionColorPicker" value="#ff3333" onchange="setExtensionColor(this.value)" style="width:40px;height:32px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
-  <button onclick="exportJSON()">⬇ Export</button>
-  <button onclick="document.getElementById('importInput').click()">⬆ Import</button>
-  <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+  <button class="btn-add" onclick="openModal(null)">+ Nouvelle tâche</button>
   <button onclick="goToToday()">Aujourd'hui</button>
+  <div class="settings-menu" id="settingsMenu">
+    <button onclick="toggleSettingsMenu()" title="Paramètres">&#9881;</button>
+    <div class="settings-dropdown">
+      <button onclick="exportJSON();toggleSettingsMenu()">⬇ Export JSON</button>
+      <button onclick="document.getElementById('importInput').click();toggleSettingsMenu()">⬆ Import JSON</button>
+      <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+      <div class="sep"></div>
+      <div class="color-row">
+        <span>Couleur extension</span>
+        <input type="color" id="extensionColorPicker" value="#ff3333" onchange="setExtensionColor(this.value)">
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Main -->
@@ -316,6 +333,13 @@ function loadTasks() {
   repairDependencies();
 }
 function saveTasks() { localStorage.setItem('lightgantt_tasks', JSON.stringify(tasks)); }
+function toggleSettingsMenu() {
+  document.getElementById('settingsMenu').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('settingsMenu');
+  if (menu && !menu.contains(e.target)) menu.classList.remove('open');
+});
 function loadExtensionColor() { 
   const saved = localStorage.getItem('lightgantt_extensionColor');
   if (saved) extensionColor = saved;
