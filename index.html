@@ -106,7 +106,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .bar-extension { position:absolute; top:0; height:100%; background:var(--extension-color, #ff3333); border-radius:0 5px 5px 0; pointer-events:none; z-index:1; opacity:0.9; overflow:hidden; }
 .bar-extension-progress { position:absolute; top:0; bottom:0; left:0; background:repeating-linear-gradient(-45deg, rgba(255,255,255,0.75) 0 4px, rgba(255,255,255,0.35) 4px 8px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
 /* Jalons Gantt */
-.milestone-marker { position:absolute; width:14px; height:14px; background:#ffd166; transform:rotate(45deg); pointer-events:all; cursor:pointer; z-index:6; border:1px solid rgba(0,0,0,0.5); box-shadow:0 2px 6px rgba(0,0,0,0.4); }
+.milestone-marker { position:absolute; width:14px; height:14px; background:#ffd166; transform:rotate(45deg); pointer-events:all; cursor:ew-resize; z-index:6; border:1px solid rgba(0,0,0,0.5); box-shadow:0 2px 6px rgba(0,0,0,0.4); }
 .milestone-marker:hover { filter:brightness(1.45); }
 /* Modal jalons */
 .milestone-row { display:grid; grid-template-columns:130px 1fr 28px; gap:6px; align-items:center; margin-bottom:6px; }
@@ -330,6 +330,7 @@ let tasks = [];
 let zoomMode = 'week';
 let cellWidth = ZOOM[zoomMode];
 let dragState = null;
+let milestoneDragState = null;
 let reorderState = null;
 let pendingBarAnimation = null;
 let ccFilters = new Set();
@@ -810,7 +811,7 @@ function renderGantt() {
       if (!m.date) return;
       const mLeft = daysBetween(range.start, parseDate(m.date)) * cellWidth + cellWidth / 2 - 7;
       const mTop = idx * ROW_HEIGHT + 24;
-      html += `<div class="milestone-marker" style="left:${mLeft}px;top:${mTop}px" data-mname="${escapeHtml(m.name)}" data-mdate="${escapeHtml(m.date)}" onmouseenter="showMilestoneTooltip(event,this)" onmousemove="moveTaskTooltip(event)" onmouseleave="hideTaskTooltip()"></div>`;
+      html += `<div class="milestone-marker" style="left:${mLeft}px;top:${mTop}px" data-mname="${escapeHtml(m.name)}" data-mdate="${escapeHtml(m.date)}" onmousedown="startMilestoneDrag(event,'${t.id}','${m.id}')" onmouseenter="showMilestoneTooltip(event,this)" onmousemove="moveTaskTooltip(event)" onmouseleave="hideTaskTooltip()"></div>`;
     });
   });
 
@@ -1387,6 +1388,50 @@ function showMilestoneTooltip(event, el) {
   tooltip.innerHTML = `<div class="tt-title">◆ ${escapeHtml(el.dataset.mname || '')}</div><div class="tt-line"><strong>Date:</strong> ${escapeHtml(el.dataset.mdate || '')}</div>`;
   tooltip.classList.add('visible');
   moveTaskTooltip(event);
+}
+
+function startMilestoneDrag(e, taskId, milestoneId) {
+  if (dragState) return;
+  hideTaskTooltip();
+  e.preventDefault();
+  e.stopPropagation();
+  const task = tasks.find(t => t.id === taskId);
+  const milestone = task && task.milestones ? task.milestones.find(m => m.id === milestoneId) : null;
+  if (!task || !milestone) return;
+  milestoneDragState = { taskId, milestoneId, originalDate: milestone.date, currentDate: milestone.date };
+  document.addEventListener('mousemove', onMilestoneDrag);
+  document.addEventListener('mouseup', endMilestoneDrag);
+}
+
+function onMilestoneDrag(e) {
+  if (!milestoneDragState) return;
+  const panel = document.getElementById('ganttPanel');
+  const range = getRange();
+  const panelRect = panel.getBoundingClientRect();
+  const xInContent = e.clientX - panelRect.left + panel.scrollLeft;
+  const dayOffset = Math.round((xInContent - (cellWidth / 2)) / cellWidth);
+  const newDate = new Date(range.start);
+  newDate.setDate(newDate.getDate() + dayOffset);
+  const nextDate = fmt(newDate);
+
+  const task = tasks.find(t => t.id === milestoneDragState.taskId);
+  const milestone = task && task.milestones ? task.milestones.find(m => m.id === milestoneDragState.milestoneId) : null;
+  if (!milestone) return;
+  if (milestone.date === nextDate) return;
+  milestone.date = nextDate;
+  milestoneDragState.currentDate = nextDate;
+  render();
+}
+
+function endMilestoneDrag() {
+  if (milestoneDragState) {
+    const changed = milestoneDragState.currentDate !== milestoneDragState.originalDate;
+    milestoneDragState = null;
+    if (changed) saveTasks();
+    render();
+  }
+  document.removeEventListener('mousemove', onMilestoneDrag);
+  document.removeEventListener('mouseup', endMilestoneDrag);
 }
 
 // ── Zoom ──
