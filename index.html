@@ -1228,6 +1228,13 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
+document.getElementById('taskDependencies').addEventListener('mousedown', function(e) {
+  if (e.target && e.target.tagName === 'OPTION') {
+    e.preventDefault();
+    e.target.selected = !e.target.selected;
+  }
+});
+
 function renderDependencySelect(task) {
   const select = document.getElementById('taskDependencies');
   const selected = task ? new Set(task.dependencies) : new Set([...select.selectedOptions].map(o => o.value));
