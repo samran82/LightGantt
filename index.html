@@ -71,9 +71,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .gantt-cell.weekend { background: rgba(255,255,255,0.02); }
 .gantt-cell.today { background: var(--today); }
 .dependency-layer { position:absolute; top:0; left:0; z-index:3; overflow:visible; pointer-events:none; }
-.dependency-path { fill:none; stroke:rgba(238,238,238,0.55); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.dependency-path { fill:none; stroke:rgba(255,200,50,0.9); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .gantt-bar-container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-.gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:grab; pointer-events:all; display:flex; align-items:center; gap:6px; padding:0 8px 0 24px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: filter .15s, transform .18s cubic-bezier(.22,1,.36,1); min-width: 6px; }
+.gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:default; pointer-events:all; display:flex; align-items:center; gap:6px; padding:0 8px 0 24px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: filter .15s, transform .18s cubic-bezier(.22,1,.36,1); min-width: 6px; }
 .gantt-bar:hover { filter:brightness(1.2); }
 .gantt-bar.dragging-time { filter:brightness(1.15); box-shadow:0 10px 24px rgba(0,0,0,.28); cursor:grabbing; }
 .gantt-bar.dragging-reorder { filter:brightness(1.12); box-shadow:0 12px 28px rgba(0,0,0,.3); cursor:ns-resize; }
@@ -85,6 +85,20 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .gantt-bar .resize-handle.left { left:0; }
 .gantt-bar .resize-handle.right { right:0; }
 .today-line { position:absolute; top:0; bottom:0; width:2px; background:var(--accent); z-index:5; pointer-events:none; }
+
+/* Bar extension date fin */
+.bar-extension { position:absolute; top:0; height:100%; background:#ff3333; border-radius:0 5px 5px 0; pointer-events:none; z-index:1; opacity:0.82; }
+.gantt-bar.long-press-active { outline:2px solid rgba(255,255,255,0.65); outline-offset:1px; }
+/* Jalons Gantt */
+.milestone-marker { position:absolute; width:14px; height:14px; background:#ffd166; transform:rotate(45deg); pointer-events:all; cursor:pointer; z-index:6; border:1px solid rgba(0,0,0,0.5); box-shadow:0 2px 6px rgba(0,0,0,0.4); }
+.milestone-marker:hover { filter:brightness(1.45); }
+/* Modal jalons */
+.milestone-row { display:grid; grid-template-columns:130px 1fr 28px; gap:6px; align-items:center; margin-bottom:6px; }
+.milestone-row input { margin:0; }
+.btn-remove-milestone { background:rgba(107,26,26,0.7); border:1px solid #6b1a1a; color:#fff; border-radius:4px; cursor:pointer; font-size:16px; padding:0; height:34px; width:28px; }
+.btn-remove-milestone:hover { background:#6b1a1a; }
+.btn-add-milestone { background:rgba(255,255,255,0.07); border:1px solid var(--border); color:var(--text2); border-radius:6px; padding:6px 12px; cursor:pointer; font-size:12px; margin-top:4px; display:block; }
+.btn-add-milestone:hover { background:rgba(255,255,255,0.12); color:var(--text); }
 
 /* Modal */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; display:none; align-items:center; justify-content:center; }
@@ -240,6 +254,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     </div>
     <label>Couleur</label>
     <div class="color-options" id="colorOptions"></div>
+    <label>Jalons</label>
+    <div id="milestoneList"></div>
+    <button type="button" class="btn-add-milestone" onclick="addMilestoneRow()">+ Ajouter un jalon</button>
     <div class="modal-actions">
       <button class="btn-delete" id="btnDelete" onclick="deleteTask()" style="display:none">Supprimer</button>
       <button class="btn-cancel" onclick="closeModal()">Annuler</button>
@@ -263,6 +280,8 @@ let reorderState = null;
 let pendingBarAnimation = null;
 let ccFilters = new Set();
 let tooltipTaskId = null;
+let longPressTimer = null;
+let longPressCleanup = null;
 
 // ── Persistence ──
 function loadTasks() {
@@ -300,6 +319,7 @@ function normalizeTask(task) {
     progress: Number.isFinite(task.progress) ? task.progress : parseInt(task.progress || 0, 10) || 0,
     color: task.color || COLORS[0],
     dependencies: Array.isArray(task.dependencies) ? [...new Set(task.dependencies.filter(Boolean))] : [],
+    milestones: Array.isArray(task.milestones) ? task.milestones.map(m => ({ id: m.id || uid(), name: (m.name||'').trim(), date: m.date||'' })).filter(m => m.date && m.name) : [],
   };
 }
 
@@ -422,6 +442,7 @@ function createTask(taskData) {
     progress: taskData.progress ?? 0,
     color: taskData.color || COLORS[Math.floor(Math.random() * COLORS.length)],
     dependencies: taskData.dependencies || [],
+    milestones: taskData.milestones || [],
   }));
   saveTasks();
   render();
@@ -547,8 +568,8 @@ function renderGantt() {
   // Dependencies
   html += `<svg class="dependency-layer" width="${totalWidth}" height="${rows.length * ROW_HEIGHT}" viewBox="0 0 ${totalWidth} ${rows.length * ROW_HEIGHT}" preserveAspectRatio="none">
     <defs>
-      <marker id="depArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(238,238,238,0.55)"></path>
+      <marker id="depArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,200,50,0.95)"></path>
       </marker>
     </defs>
     ${renderDependencyPaths(range, taskIndexMap)}
@@ -566,22 +587,48 @@ function renderGantt() {
     const top = idx * ROW_HEIGHT + 7;
     let dragClass = '';
     if (dragState && dragState.id === t.id) {
-      dragClass = dragState.mode === 'reorder' ? ' dragging-reorder' : dragState.mode === 'move' ? ' dragging-time' : '';
+      dragClass = dragState.mode === 'reorder' ? ' dragging-reorder' : (dragState.mode === 'resize-right' || dragState.mode === 'resize-left') ? ' dragging-time' : '';
     }
     const ccLabel = t.cc || 'Sans CC';
-    html += `<div class="gantt-bar${dragClass}" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}" ondblclick="openModal('${t.id}')"
+    // Extension rouge lors du resize-right
+    let extensionHtml = '';
+    if (dragState && dragState.id === t.id && dragState.mode === 'resize-right') {
+      const origEndDate = parseDate(dragState.origEnd);
+      const curEndDate = parseDate(t.end);
+      if (curEndDate > origEndDate) {
+        const origRightX = (daysBetween(range.start, origEndDate) + 1) * cellWidth;
+        const extLeft = origRightX - left;
+        const extWidth = (daysBetween(range.start, curEndDate) + 1) * cellWidth - origRightX;
+        if (extWidth > 0) extensionHtml = `<div class="bar-extension" style="left:${extLeft}px;width:${extWidth}px"></div>`;
+      }
+    }
+    html += `<div class="gantt-bar${dragClass}" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}"
       onmouseenter="showTaskTooltip(event,'${t.id}')"
       onmousemove="moveTaskTooltip(event)"
       onmouseleave="hideTaskTooltip()"
-      onmousedown="startDrag(event,'${t.id}','move')">
+      onmousedown="startBarLongPress(event,'${t.id}')">
       <div class="bar-progress" style="width:${t.progress}%"></div>
       <div class="reorder-handle" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','reorder')">::</div>
       <div class="resize-handle left" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-left')"></div>
       <div class="resize-handle right" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-right')"></div>
+      ${extensionHtml}
       <span style="position:relative;z-index:1">${escapeHtml(t.name)}</span>
     </div>`;
   });
   html += '</div>';
+
+  // Jalons
+  rows.forEach((row, idx) => {
+    if (row.type !== 'task') return;
+    const t = row.task;
+    if (!t.milestones || !t.milestones.length) return;
+    t.milestones.forEach(m => {
+      if (!m.date) return;
+      const mLeft = daysBetween(range.start, parseDate(m.date)) * cellWidth + cellWidth / 2 - 7;
+      const mTop = idx * ROW_HEIGHT + 11;
+      html += `<div class="milestone-marker" style="left:${mLeft}px;top:${mTop}px" data-mname="${escapeHtml(m.name)}" data-mdate="${escapeHtml(m.date)}" onmouseenter="showMilestoneTooltip(event,this)" onmousemove="moveTaskTooltip(event)" onmouseleave="hideTaskTooltip()"></div>`;
+    });
+  });
 
   // Today line
   const todayOff = daysBetween(range.start, today);
@@ -680,6 +727,7 @@ function hideTaskTooltip() {
 
 // ── Drag & Drop ──
 function startDrag(e, id, mode) {
+  if (mode === 'move') return;
   hideTaskTooltip();
   e.preventDefault();
   const task = tasks.find(t => t.id === id);
@@ -708,12 +756,7 @@ function onDrag(e) {
   const origS = parseDate(dragState.origStart);
   const origE = parseDate(dragState.origEnd);
 
-  if (dragState.mode === 'move') {
-    const ns = new Date(origS); ns.setDate(ns.getDate()+dayDelta);
-    const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
-    task.start = fmt(ns);
-    task.end = fmt(ne);
-  } else if (dragState.mode === 'reorder') {
+  if (dragState.mode === 'reorder') {
     reorderTaskFromBarDrag(e.clientY);
   } else if (dragState.mode === 'resize-right') {
     const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
@@ -727,6 +770,13 @@ function onDrag(e) {
 
 function endDrag() {
   if (dragState) {
+    if (dragState.mode === 'resize-right') {
+      const task = tasks.find(t => t.id === dragState.id);
+      if (task) {
+        const delta = daysBetween(parseDate(dragState.origEnd), parseDate(task.end));
+        if (delta > 0) cascadeDependentTasks(dragState.id, delta);
+      }
+    }
     saveTasks();
     dragState = null;
     render();
@@ -961,6 +1011,8 @@ function openModal(id) {
   document.getElementById('progressVal').textContent = (task ? task.progress : 0) + '%';
   document.getElementById('btnDelete').style.display = task ? '' : 'none';
   renderDependencySelect(task);
+  document.getElementById('milestoneList').innerHTML = '';
+  if (task && task.milestones) task.milestones.forEach(m => addMilestoneRow(m.name, m.date));
 
   const selColor = task ? task.color : COLORS[Math.floor(Math.random()*COLORS.length)];
   document.getElementById('colorOptions').innerHTML = COLORS.map(c =>
@@ -1005,6 +1057,7 @@ function saveTask() {
   const progress = parseInt(document.getElementById('taskProgress').value);
   const color = document.getElementById('colorOptions').dataset.selected;
   const dependencies = [...document.getElementById('taskDependencies').selectedOptions].map(option => option.value);
+  const milestones = getMilestonesFromModal();
 
   if (!name) { document.getElementById('taskName').focus(); return; }
   if (!start || !end || parseDate(end) < parseDate(start)) { alert('Dates invalides'); return; }
@@ -1012,9 +1065,9 @@ function saveTask() {
 
   if (id) {
     const t = tasks.find(t => t.id === id);
-    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, etp, start, end, progress, color, dependencies })); }
+    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, etp, start, end, progress, color, dependencies, milestones })); }
   } else {
-    createTask({ name, application, cc, porteur, etp, start, end, progress, color, dependencies });
+    createTask({ name, application, cc, porteur, etp, start, end, progress, color, dependencies, milestones });
     closeModal();
     return;
   }
@@ -1070,6 +1123,95 @@ function deleteTask() {
     closeModal();
     render();
   }
+}
+
+// ── Milestone modal ──
+function addMilestoneRow(name = '', date = '') {
+  const mid = uid();
+  const row = document.createElement('div');
+  row.className = 'milestone-row';
+  row.dataset.mid = mid;
+  row.innerHTML =
+    `<input type="date" class="milestone-date" value="${escapeHtml(date)}">` +
+    `<input type="text" class="milestone-name" placeholder="Nom du jalon" value="${escapeHtml(name)}">` +
+    `<button type="button" class="btn-remove-milestone" onclick="removeMilestoneRow('${mid}')">×</button>`;
+  document.getElementById('milestoneList').appendChild(row);
+}
+
+function removeMilestoneRow(mid) {
+  const row = document.querySelector(`.milestone-row[data-mid="${mid}"]`);
+  if (row) row.remove();
+}
+
+function getMilestonesFromModal() {
+  return [...document.querySelectorAll('#milestoneList .milestone-row')].map(row => ({
+    id: row.dataset.mid,
+    date: row.querySelector('.milestone-date').value,
+    name: row.querySelector('.milestone-name').value.trim(),
+  })).filter(m => m.date && m.name);
+}
+
+// ── Long press barre Gantt ──
+function startBarLongPress(e, id) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  clearBarLongPress();
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const onMove = mv => {
+    if (Math.abs(mv.clientX - startX) > 6 || Math.abs(mv.clientY - startY) > 6) clearBarLongPress();
+  };
+  const onUp = () => clearBarLongPress();
+  longPressCleanup = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.querySelectorAll('.gantt-bar.long-press-active').forEach(el => el.classList.remove('long-press-active'));
+  };
+  longPressTimer = setTimeout(() => {
+    const cleanup = longPressCleanup;
+    longPressTimer = null;
+    longPressCleanup = null;
+    if (cleanup) cleanup();
+    openModal(id);
+  }, 600);
+  const bar = document.querySelector(`.gantt-bar[data-id="${id}"]`);
+  if (bar) bar.classList.add('long-press-active');
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function clearBarLongPress() {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  if (longPressCleanup) { longPressCleanup(); longPressCleanup = null; }
+}
+
+// ── Cascade dépendances ──
+function cascadeDependentTasks(rootTaskId, deltaEndDays) {
+  if (deltaEndDays <= 0) return;
+  const visited = new Set();
+  function cascade(taskId) {
+    if (visited.has(taskId)) return;
+    visited.add(taskId);
+    tasks.forEach(task => {
+      if (!task.dependencies.includes(taskId)) return;
+      const ns = new Date(parseDate(task.start)); ns.setDate(ns.getDate() + deltaEndDays);
+      const ne = new Date(parseDate(task.end)); ne.setDate(ne.getDate() + deltaEndDays);
+      task.start = fmt(ns);
+      task.end = fmt(ne);
+      cascade(task.id);
+    });
+  }
+  cascade(rootTaskId);
+}
+
+// ── Tooltip jalons ──
+function showMilestoneTooltip(event, el) {
+  const tooltip = document.getElementById('taskTooltip');
+  if (!tooltip) return;
+  tooltipTaskId = 'milestone';
+  tooltip.innerHTML = `<div class="tt-title">◆ ${escapeHtml(el.dataset.mname || '')}</div><div class="tt-line"><strong>Date:</strong> ${escapeHtml(el.dataset.mdate || '')}</div>`;
+  tooltip.classList.add('visible');
+  moveTaskTooltip(event);
 }
 
 // ── Zoom ──
