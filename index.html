@@ -86,7 +86,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .gantt-cell.weekend { background: rgba(255,255,255,0.02); }
 .gantt-cell.today { background: var(--today); }
 .dependency-layer { position:absolute; top:0; left:0; z-index:3; overflow:visible; pointer-events:none; }
-.dependency-path { fill:none; stroke:rgba(255,200,50,0.9); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.dependency-path { fill:none; stroke:rgba(255,200,50,0.75); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+.dependency-dot { fill:rgba(255,200,50,0.9); }
 .gantt-bar-container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
 .gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:default; pointer-events:all; display:flex; align-items:center; gap:6px; padding:0 8px 0 24px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: filter .15s, transform .18s cubic-bezier(.22,1,.36,1); min-width: 6px; }
 .gantt-bar:hover { filter:brightness(1.2); }
@@ -726,8 +727,8 @@ function renderGantt() {
   // Dependencies
   html += `<svg class="dependency-layer" width="${totalWidth}" height="${rows.length * ROW_HEIGHT}" viewBox="0 0 ${totalWidth} ${rows.length * ROW_HEIGHT}" preserveAspectRatio="none">
     <defs>
-      <marker id="depArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,200,50,0.95)"></path>
+      <marker id="depArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M 0 1 L 7 4 L 0 7 Z" fill="rgba(255,200,50,0.95)"></path>
       </marker>
     </defs>
     ${renderDependencyPaths(range, taskIndexMap)}
@@ -825,6 +826,7 @@ function renderGantt() {
 }
 
 function renderDependencyPaths(range, taskIndexMap) {
+  const R = 6; // corner radius
   return getVisibleTasks().flatMap(task => {
     const targetRowIndex = taskIndexMap.get(task.id);
     if (targetRowIndex === undefined) return [];
@@ -838,8 +840,28 @@ function renderDependencyPaths(range, taskIndexMap) {
       const targetStartX = daysBetween(range.start, parseDate(task.start)) * cellWidth;
       const sourceY = sourceRowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
       const targetY = targetRowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
-      const elbowX = Math.max(sourceEndX + 18, targetStartX - 18);
-      return `<path class="dependency-path" marker-end="url(#depArrow)" d="M ${sourceEndX} ${sourceY} H ${elbowX} V ${targetY} H ${targetStartX}"></path>`;
+      const elbowX = Math.max(sourceEndX + 16, targetStartX - 16);
+      const dy = targetY - sourceY;
+
+      let d;
+      if (Math.abs(dy) < 4) {
+        // Same row — straight horizontal line
+        d = `M ${sourceEndX} ${sourceY} H ${targetStartX}`;
+      } else {
+        const signY = dy > 0 ? 1 : -1;
+        const r = Math.min(R, Math.abs(dy) / 2, Math.abs(elbowX - sourceEndX) / 2);
+        d = [
+          `M ${sourceEndX} ${sourceY}`,
+          `H ${elbowX - r}`,
+          `Q ${elbowX} ${sourceY} ${elbowX} ${sourceY + r * signY}`,
+          `V ${targetY - r * signY}`,
+          `Q ${elbowX} ${targetY} ${elbowX + r} ${targetY}`,
+          `H ${targetStartX}`,
+        ].join(' ');
+      }
+
+      const dot = `<circle class="dependency-dot" cx="${sourceEndX}" cy="${sourceY}" r="3"/>`;
+      return dot + `<path class="dependency-path" marker-end="url(#depArrow)" d="${d}"/>`;
     });
   }).join('');
 }
