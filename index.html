@@ -445,52 +445,40 @@ function getVisibleTaskIndexMap() {
   return map;
 }
 
-function syncTeamFilterOptions() {
-  const container = document.getElementById('teamFilterButtons');
-  const teamValues = [...new Set(tasks.map(task => task.application || 'Sans application'))].sort((a, b) => a.localeCompare(b, 'fr'));
-  teamFilters = new Set([...teamFilters].filter(t => teamValues.includes(t)));
-  const options = ['all', ...teamValues];
-  container.innerHTML = options.map(value => {
-    const label = value === 'all' ? 'Toutes les Teams' : value;
-    const active = value === 'all' ? (teamFilters.size === 0 ? ' active' : '') : (teamFilters.has(value) ? ' active' : '');
-    return `<button class="filter-btn${active}" data-value="${escapeHtml(value)}" onclick="changeTeamFilterFromButton(this)">${escapeHtml(label)}</button>`;
+// ── Filters ──
+function syncFilterRow(containerId, getValue, fallback, filterSet, allLabel, onToggle) {
+  const container = document.getElementById(containerId);
+  const values = [...new Set(tasks.map(t => getValue(t) || fallback))].sort((a, b) => a.localeCompare(b, 'fr'));
+  // Prune stale active filters
+  const pruned = new Set([...filterSet].filter(v => values.includes(v)));
+  filterSet.clear(); pruned.forEach(v => filterSet.add(v));
+  container.innerHTML = ['all', ...values].map(value => {
+    const label = value === 'all' ? allLabel : value;
+    const active = value === 'all' ? (filterSet.size === 0 ? ' active' : '') : (filterSet.has(value) ? ' active' : '');
+    return `<button class="filter-btn${active}" data-value="${escapeHtml(value)}" onclick="${onToggle}(this.dataset.value)">${escapeHtml(label)}</button>`;
   }).join('');
 }
 
-function changeTeamFilterFromButton(button) { changeTeamFilter(button.dataset.value || 'all'); }
-
-function changeTeamFilter(value) {
-  if (value === 'all') { teamFilters.clear(); }
-  else if (teamFilters.has(value)) { teamFilters.delete(value); }
-  else { teamFilters.add(value); }
+function toggleFilter(filterSet, value) {
+  if (value === 'all') { filterSet.clear(); }
+  else if (filterSet.has(value)) { filterSet.delete(value); }
+  else { filterSet.add(value); }
   render();
 }
 
-function syncCcFilterOptions() {
-  const container = document.getElementById('ccFilterButtons');
-  const ccValues = [...new Set(tasks.map(task => task.cc || 'Sans CC'))].sort((a, b) => a.localeCompare(b, 'fr'));
-  ccFilters = new Set([...ccFilters].filter(cc => ccValues.includes(cc)));
-
-  const options = ['all', ...ccValues];
-  container.innerHTML = options.map(value => {
-    const label = value === 'all' ? 'Tous les CC' : value;
-    const active = value === 'all' ? (ccFilters.size === 0 ? ' active' : '') : (ccFilters.has(value) ? ' active' : '');
-    return `<button class="filter-btn${active}" data-value="${escapeHtml(value)}" onclick="changeCcFilterFromButton(this)">${escapeHtml(label)}</button>`;
-  }).join('');
-}
-
-function changeCcFilterFromButton(button) {
-  changeCcFilter(button.dataset.value || 'all');
-}
+function changeTeamFilter(value) { toggleFilter(teamFilters, value); }
+function changeCcFilter(value)   { toggleFilter(ccFilters,   value); }
 
 // ── Autocomplete ──
+const AC_FIELDS = {
+  application: t => t.application,
+  cc:          t => t.cc,
+  porteur:     t => t.porteur,
+};
 function acGetOptions(type) {
-  switch(type) {
-    case 'application': return [...new Set(tasks.map(t => t.application).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
-    case 'cc':          return [...new Set(tasks.map(t => t.cc).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
-    case 'porteur':     return [...new Set(tasks.map(t => t.porteur).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
-    default: return [];
-  }
+  const getter = AC_FIELDS[type];
+  if (!getter) return [];
+  return [...new Set(tasks.map(getter).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
 function acShow(input) {
@@ -535,16 +523,7 @@ document.addEventListener('focusout', e => {
   if (e.target.dataset && e.target.dataset.ac) setTimeout(acHide, 120);
 });
 
-function changeCcFilter(value) {
-  if (value === 'all') {
-    ccFilters.clear();
-  } else if (ccFilters.has(value)) {
-    ccFilters.delete(value);
-  } else {
-    ccFilters.add(value);
-  }
-  render();
-}
+function changeCcFilter(value)   { toggleFilter(ccFilters,   value); }
 
 function escapeHtml(value) {
   return String(value)
@@ -627,8 +606,8 @@ function countWorkingDays(startDate, endDate) {
 
 // ── Render ──
 function render() {
-  syncTeamFilterOptions();
-  syncCcFilterOptions();
+  syncFilterRow('teamFilterButtons', t => t.application, 'Sans application', teamFilters, 'Toutes les Teams', 'changeTeamFilter');
+  syncFilterRow('ccFilterButtons',   t => t.cc,          'Sans CC',          ccFilters,   'Tous les CC',      'changeCcFilter');
   renderTaskList();
   renderGantt();
 }
