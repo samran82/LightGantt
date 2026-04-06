@@ -79,6 +79,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .settings-dropdown .toggle-row { display:flex; align-items:center; gap:10px; padding:7px 12px; color:var(--text); font-size:13px; border-radius:6px; cursor:pointer; user-select:none; transition:background .15s; }
 .settings-dropdown .toggle-row:hover { background:rgba(255,255,255,0.06); }
 .settings-dropdown .toggle-row input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+.settings-dropdown .select-row { display:flex; align-items:center; gap:10px; padding:7px 12px; color:var(--text); font-size:13px; border-radius:6px; }
+.settings-dropdown .select-row select { margin-left:auto; width:auto; min-width:130px; padding:6px 10px; }
 .settings-dropdown .sep { height:1px; background:var(--border); margin:2px 0; }
 .filter-row { display:flex; align-items:center; gap:8px; min-width:0; width:100%; overflow:hidden; }
 .filter-label { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
@@ -116,6 +118,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .task-list { flex:1; overflow-y:auto; }
 .task-group-row { display:flex; align-items:center; height:36px; padding:0 10px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text); font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
 .task-group-row span:last-child { margin-left:auto; color:var(--text2); font-weight:600; }
+.task-group-row.clickable { cursor:pointer; user-select:none; }
+.task-group-row.clickable:hover { background:rgba(255,255,255,0.08); }
 .task-row { display:grid; grid-template-columns: 40px 1fr 90px 90px; align-items:center; height:36px; padding:0 6px; border-bottom:1px solid var(--border); cursor:pointer; transition: background .15s, box-shadow .18s, opacity .18s, transform .24s cubic-bezier(.22,1,.36,1); font-size:13px; }
 .task-row:hover { background:var(--row-hover); }
 .task-row.selected { background: rgba(83,52,131,0.3); }
@@ -139,15 +143,51 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .gantt-header-cell.weekend { background: rgba(255,255,255,0.03); }
 .gantt-header-cell.today { background: var(--today); color: var(--accent); font-weight:700; }
 .gantt-body { position:relative; }
-.gantt-group-row { display:flex; align-items:center; height:36px; padding:0 12px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text2); font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
+.gantt-group-row { display:flex; align-items:center; height:36px; padding:0 12px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text2); font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; position:relative; overflow:hidden; }
+.gantt-group-row.gantt-group-release-row { padding:0; }
+.gantt-group-label { position:relative; z-index:2; padding:0 12px; color:var(--text2); pointer-events:none; }
+.gantt-group-bar {
+  position:absolute;
+  top:7px;
+  z-index:2;
+  height:22px;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(83,52,131,0.88), rgba(15,52,96,0.92));
+  border:1px solid rgba(255,255,255,0.14);
+  box-shadow:0 6px 18px rgba(0,0,0,0.18);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 12px;
+  min-width:96px;
+  overflow:hidden;
+  pointer-events:auto;
+  cursor:pointer;
+}
+.gantt-group-bar-progress {
+  position:absolute;
+  top:0;
+  left:0;
+  bottom:0;
+  background:rgba(255,255,255,0.18);
+}
+.gantt-group-bar-title, .gantt-group-bar-meta { position:relative; z-index:1; text-transform:none; white-space:nowrap; }
+.gantt-group-bar-title { color:#fff; font-weight:700; }
+.gantt-group-bar-meta { color:rgba(255,255,255,0.72); font-size:10px; margin-left:auto; }
+.gantt-group-bar-team { color:rgba(255,255,255,0.58); font-size:10px; margin-left:4px; position:relative; z-index:1; text-transform:none; white-space:nowrap; }
+.gantt-group-bar-toggle { color:rgba(255,255,255,0.92); font-weight:700; font-size:12px; width:12px; text-align:center; position:relative; z-index:1; }
 .gantt-row { display:flex; height:36px; border-bottom:1px solid var(--border); position:relative; }
 .gantt-cell { flex-shrink:0; border-right:1px solid rgba(255,255,255,0.03); }
 .gantt-cell.weekend { background: rgba(255,255,255,0.02); }
 .gantt-cell.today { background: var(--today); }
+.gantt-grid-bg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+.gantt-grid-col { position:absolute; top:0; height:100%; border-right:1px solid rgba(255,255,255,0.03); }
+.gantt-grid-col.weekend { background: rgba(255,255,255,0.02); }
+.gantt-grid-col.today { background: var(--today); }
 .dependency-layer { position:absolute; top:0; left:0; z-index:3; overflow:visible; pointer-events:none; }
 .dependency-path { fill:none; stroke:rgba(255,200,50,0.75); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
 .dependency-dot { fill:rgba(255,200,50,0.9); }
-.gantt-bar-container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+.gantt-bar-container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:4; }
 .gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:default; pointer-events:all; display:flex; align-items:center; gap:6px; padding:0 8px 0 24px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:visible; transition: filter .15s, transform .18s cubic-bezier(.22,1,.36,1); min-width: 6px; }
 .gantt-bar:hover { filter:brightness(1.2); }
 .gantt-bar.dragging-time { filter:brightness(1.15); box-shadow:0 10px 24px rgba(0,0,0,.28); cursor:grabbing; }
@@ -313,6 +353,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
           <input type="checkbox" id="showRemainingJoToggle" checked onchange="setShowRemainingJo(this.checked)">
           Afficher reste JO
         </label>
+        <label class="select-row" for="groupBySelect">
+          Regrouper par
+          <select id="groupBySelect" onchange="setGroupBy(this.value)">
+            <option value="application">Team</option>
+            <option value="release">Release</option>
+          </select>
+        </label>
         <label class="color-row" for="extensionColorPicker">Couleur extension
           <input type="color" id="extensionColorPicker" value="#ff3333" onchange="setExtensionColor(this.value)" style="margin-left:auto;">
         </label>
@@ -400,8 +447,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <label>Jalons</label>
     <div id="milestoneList"></div>
     <button type="button" class="btn-add-milestone" onclick="addMilestoneRow()">+ Ajouter un jalon</button>
-    <div class="modal-row-4">
+    <div class="modal-row-2">
       <div><label>Team RS/TL</label><input type="text" id="taskApplication" placeholder="Team RS/TL" data-ac="application" oninput="renderDependencySelect(null)"></div>
+      <div><label>Release</label><input type="text" id="taskRelease" placeholder="Release" data-ac="release"></div>
+    </div>
+    <div class="modal-row-3">
       <div><label>CC</label><input type="text" id="taskCc" placeholder="CC" data-ac="cc"></div>
       <div><label>Lead</label><input type="text" id="taskPorteur" placeholder="Lead" data-ac="porteur"></div>
       <div><label>ETP</label><input type="number" id="taskEtp" min="0" step="0.1" placeholder="Ex: 0.5"></div>
@@ -459,9 +509,16 @@ let tooltipTaskId = null;
 let acCurrentInput = null;
 let extensionColor = '#ff3333';
 let showRemainingJo = true;
+let groupBy = 'application';
+let releaseCollapsedGroups = new Set();
 let focusedTaskId = null;
 let selectedTaskId = null;
 const workingDaysCache = new Map();
+
+const GROUP_BY_OPTIONS = {
+  application: { label: 'Team', fallback: 'Sans application' },
+  release: { label: 'Release', fallback: 'Sans release' },
+};
 
 // ── Persistence ──
 function loadTasks() {
@@ -470,10 +527,10 @@ function loadTasks() {
     const today = new Date();
     const d = (off) => { const t = new Date(today); t.setDate(t.getDate()+off); return fmt(t); };
     tasks = [
-      { id: uid(), name:'Conception', application:'Portail Client', cc:'DEV', start:d(-5), end:d(2), progress:80, color:COLORS[0], dependencies:[] },
-      { id: uid(), name:'Développement', application:'Portail Client', cc:'DEV', start:d(0), end:d(14), progress:30, color:COLORS[3], dependencies:[] },
-      { id: uid(), name:'Tests', application:'Portail Client', cc:'QA', start:d(10), end:d(20), progress:0, color:COLORS[4], dependencies:[] },
-      { id: uid(), name:'Déploiement', application:'Back Office', cc:'OPS', start:d(18), end:d(25), progress:0, color:COLORS[7], dependencies:[] },
+      { id: uid(), name:'Conception', application:'Portail Client', release:'R1', cc:'DEV', start:d(-5), end:d(2), progress:80, color:COLORS[0], dependencies:[] },
+      { id: uid(), name:'Développement', application:'Portail Client', release:'R1', cc:'DEV', start:d(0), end:d(14), progress:30, color:COLORS[3], dependencies:[] },
+      { id: uid(), name:'Tests', application:'Portail Client', release:'R2', cc:'QA', start:d(10), end:d(20), progress:0, color:COLORS[4], dependencies:[] },
+      { id: uid(), name:'Déploiement', application:'Back Office', release:'R2', cc:'OPS', start:d(18), end:d(25), progress:0, color:COLORS[7], dependencies:[] },
     ];
     saveTasks();
   }
@@ -524,10 +581,49 @@ function loadShowRemainingJo() {
   if (toggle) toggle.checked = showRemainingJo;
 }
 function saveShowRemainingJo(value) { localStorage.setItem('lightgantt_showRemainingJo', String(value)); }
+function loadGroupBy() {
+  const saved = localStorage.getItem('lightgantt_groupBy');
+  groupBy = saved === 'release' ? 'release' : 'application';
+  const select = document.getElementById('groupBySelect');
+  if (select) select.value = groupBy;
+}
+function saveGroupBy(value) { localStorage.setItem('lightgantt_groupBy', value); }
+function loadReleaseCollapsedGroups() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('lightgantt_releaseCollapsedGroups') || '[]');
+    releaseCollapsedGroups = new Set(Array.isArray(raw) ? raw : []);
+  } catch {
+    releaseCollapsedGroups = new Set();
+  }
+}
+function saveReleaseCollapsedGroups() {
+  localStorage.setItem('lightgantt_releaseCollapsedGroups', JSON.stringify([...releaseCollapsedGroups]));
+}
 function setShowRemainingJo(value) {
   showRemainingJo = !!value;
   saveShowRemainingJo(showRemainingJo);
   render();
+}
+function setGroupBy(value) {
+  groupBy = value === 'release' ? 'release' : 'application';
+  saveGroupBy(groupBy);
+  render();
+}
+function isGroupCollapsed(groupKey) {
+  return groupBy === 'release' && releaseCollapsedGroups.has(groupKey);
+}
+function toggleReleaseGroup(encodedGroupKey) {
+  if (groupBy !== 'release') return;
+  const groupKey = decodeURIComponent(encodedGroupKey || '');
+  if (!groupKey) return;
+  if (releaseCollapsedGroups.has(groupKey)) releaseCollapsedGroups.delete(groupKey);
+  else releaseCollapsedGroups.add(groupKey);
+  saveReleaseCollapsedGroups();
+  render();
+}
+function toggleGroupFromList(encodedGroupKey) {
+  if (groupBy !== 'release') return;
+  toggleReleaseGroup(encodedGroupKey);
 }
 function setExtensionColor(color) {
   extensionColor = color;
@@ -547,6 +643,7 @@ function normalizeTask(task) {
     id: task.id || uid(),
     name: task.name || 'Tâche sans nom',
     application: (task.application || 'Sans application').trim() || 'Sans application',
+    release: (task.release || '').trim() || 'Sans release',
     cc: (task.cc || '').trim(),
     porteur: (task.porteur || '').trim(),
     priority,
@@ -560,6 +657,36 @@ function normalizeTask(task) {
     dependencies: Array.isArray(task.dependencies) ? [...new Set(task.dependencies.filter(Boolean))] : [],
     milestones: Array.isArray(task.milestones) ? task.milestones.map(m => ({ id: m.id || uid(), name: (m.name||'').trim(), date: m.date||'' })).filter(m => m.date && m.name) : [],
   };
+}
+
+function getTaskGroupValue(task) {
+  if (groupBy === 'release') {
+    const team = (task.application || '').trim() || GROUP_BY_OPTIONS.application.fallback;
+    const release = (task.release || '').trim() || GROUP_BY_OPTIONS.release.fallback;
+    return `${team}|||${release}`;
+  }
+  const config = GROUP_BY_OPTIONS.application;
+  return (task.application || '').trim() || config.fallback;
+}
+
+function getTaskGroupLabelFromKey(key) {
+  if (groupBy === 'release') {
+    const [team = GROUP_BY_OPTIONS.application.fallback, release = GROUP_BY_OPTIONS.release.fallback] = String(key).split('|||');
+    return `${team} • ${release}`;
+  }
+  return key;
+}
+
+function getTaskGroupPartsFromKey(key) {
+  if (groupBy === 'release') {
+    const [team = GROUP_BY_OPTIONS.application.fallback, release = GROUP_BY_OPTIONS.release.fallback] = String(key).split('|||');
+    return { team, release };
+  }
+  return { team: '', release: '' };
+}
+
+function getTaskGroupMeta() {
+  return GROUP_BY_OPTIONS[groupBy] || GROUP_BY_OPTIONS.application;
 }
 
 function repairDependencies() {
@@ -584,18 +711,56 @@ function getGroupedVisibleRows(visibleTasks = getVisibleTasks()) {
   const groups = new Map();
 
   visibleTasks.forEach(task => {
-    const key = task.application || 'Sans application';
+    const key = getTaskGroupValue(task);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(task);
   });
 
-  return [...groups.keys()].sort((a, b) => a.localeCompare(b, 'fr')).flatMap(application => {
-    const appTasks = groups.get(application);
+  return [...groups.keys()].sort((a, b) => a.localeCompare(b, 'fr')).flatMap(groupKey => {
+    const groupTasks = groups.get(groupKey);
+    const { team, release } = getTaskGroupPartsFromKey(groupKey);
+    const collapsed = isGroupCollapsed(groupKey);
+    const sortedTasks = [...groupTasks].sort((a, b) => parseDate(a.start) - parseDate(b.start));
+    const firstTask = sortedTasks[0];
+    const lastTask = [...groupTasks].sort((a, b) => parseDate(b.end) - parseDate(a.end))[0];
+    const avgProgress = groupTasks.length ? Math.round(groupTasks.reduce((sum, task) => sum + task.progress, 0) / groupTasks.length) : 0;
     return [
-      { type: 'group', application, count: appTasks.length },
-      ...appTasks.map(task => ({ type: 'task', task })),
+      {
+        type: 'group',
+        groupKey,
+        label: getTaskGroupLabelFromKey(groupKey),
+        team,
+        release,
+        collapsed,
+        count: groupTasks.length,
+        start: firstTask ? firstTask.start : '',
+        end: lastTask ? lastTask.end : '',
+        progress: avgProgress,
+      },
+      ...(collapsed ? [] : groupTasks.map(task => ({ type: 'task', task }))),
     ];
   });
+}
+
+function buildGroupSummaryBar(row, range, top) {
+  if (groupBy !== 'release' || !row.start || !row.end) return '';
+  const start = parseDate(row.start);
+  const end = parseDate(row.end);
+  const left = daysBetween(range.start, start) * cellWidth;
+  const width = Math.max(cellWidth, (daysBetween(start, end) + 1) * cellWidth);
+  const progress = Math.max(0, Math.min(100, row.progress || 0));
+  const countLabel = `${row.count} tâche${row.count > 1 ? 's' : ''}`;
+  const titleLabel = row.release || row.label;
+  const teamLabel = row.team || '';
+  const toggleGlyph = row.collapsed ? '+' : '-';
+  const encodedGroupKey = encodeURIComponent(row.groupKey || '');
+  return `<div class="gantt-group-bar" style="left:${left}px;top:${top}px;width:${width}px" onclick="toggleReleaseGroup('${encodedGroupKey}')" title="${row.collapsed ? 'Etendre' : 'Reduire'} le groupe">
+    <span class="gantt-group-bar-toggle">${toggleGlyph}</span>
+    <div class="gantt-group-bar-progress" style="width:${progress}%"></div>
+    <span class="gantt-group-bar-title">${escapeHtml(titleLabel)}</span>
+    ${teamLabel ? `<span class="gantt-group-bar-team">${escapeHtml(teamLabel)}</span>` : ''}
+    <span class="gantt-group-bar-meta">${countLabel}</span>
+  </div>`;
 }
 
 function getVisibleTaskIndexMap(rows = getGroupedVisibleRows()) {
@@ -645,6 +810,7 @@ function changeCcFilter(value)   { toggleFilter(ccFilters,   value); }
 // ── Autocomplete ──
 const AC_FIELDS = {
   application: t => t.application,
+  release:     t => t.release,
   cc:          t => t.cc,
   porteur:     t => t.porteur,
 };
@@ -709,6 +875,10 @@ function sameApplication(taskA, taskB) {
   return taskA && taskB && taskA.application === taskB.application;
 }
 
+function sameGroupingBucket(taskA, taskB) {
+  return taskA && taskB && getTaskGroupValue(taskA) === getTaskGroupValue(taskB);
+}
+
 function getDefaultTaskDates() {
   const start = new Date();
   start.setHours(0,0,0,0);
@@ -722,6 +892,7 @@ function createTask(taskData) {
     id: uid(),
     name: taskData.name,
     application: taskData.application,
+    release: taskData.release,
     cc: taskData.cc,
     porteur: taskData.porteur,
     priority: taskData.priority,
@@ -790,11 +961,16 @@ function renderTaskList(rows) {
   const el = document.getElementById('taskList');
   el.innerHTML = rows.map(row => {
     if (row.type === 'group') {
-      return `<div class="task-group-row"><span>${escapeHtml(row.application)}</span><span>${row.count} tâche${row.count > 1 ? 's' : ''}</span></div>`;
+      const releaseToggle = groupBy === 'release' ? (row.collapsed ? ' [+]' : ' [-]') : '';
+      const encodedGroupKey = encodeURIComponent(row.groupKey || '');
+      const clickableClass = groupBy === 'release' ? ' clickable' : '';
+      const clickHandler = groupBy === 'release' ? ` onclick="toggleGroupFromList('${encodedGroupKey}')"` : '';
+      return `<div class="task-group-row${clickableClass}"${clickHandler}><span>${escapeHtml(row.label)}${releaseToggle}</span><span>${row.count} tâche${row.count > 1 ? 's' : ''}</span></div>`;
     }
 
     const task = row.task;
     const ccLabel = task.cc || 'Sans CC';
+    const releaseLabel = task.release || 'Sans release';
     const selectedClass = selectedTaskId === task.id ? ' selected' : '';
     return `
       <div class="task-row${selectedClass}" draggable="true" onclick="selectTask('${task.id}')" ondblclick="openModal('${task.id}')" data-id="${task.id}"
@@ -803,7 +979,7 @@ function renderTaskList(rows) {
         ondrop="dropTaskReorder(event,'${task.id}')"
         ondragend="endTaskReorder()">
         <div class="task-color" style="background:${task.color}"></div>
-        <div class="task-meta" title="${escapeHtml(task.name)} | ${escapeHtml(task.application)} | ${escapeHtml(ccLabel)}">
+        <div class="task-meta" title="${escapeHtml(task.name)} | ${escapeHtml(task.application)} | ${escapeHtml(releaseLabel)} | ${escapeHtml(ccLabel)}">
           <span class="task-name">${escapeHtml(task.name)}</span>
           <span class="task-badge">${escapeHtml(ccLabel)}</span>
         </div>
@@ -837,32 +1013,31 @@ function renderKpis(visibleTasks) {
   if (!el) return;
   const today = new Date(); today.setHours(0,0,0,0);
 
-  const doneTasks    = visibleTasks.filter(t => t.progress === 100);
-  const lateTasks    = visibleTasks.filter(t => t.progress < 100 && parseDate(t.end) < today);
-  const activeTasks  = visibleTasks.filter(t => { const s=parseDate(t.start),e=parseDate(t.end); return t.progress < 100 && s <= today && e >= today; });
-  const pendingTasks = visibleTasks.filter(t => t.progress < 100 && parseDate(t.start) > today);
+  const doneTasks = [], lateTasks = [], activeTasks = [], pendingTasks = [];
+  let totalDur = 0, weightedProg = 0, etpTotal = 0, joRestants = 0;
+  const teamsSet = new Set();
 
-  let totalDur = 0, weightedProg = 0;
   visibleTasks.forEach(t => {
-    const dur = Math.max(1, daysBetween(parseDate(t.start), parseDate(t.end)) + 1);
+    teamsSet.add(t.application);
+    const s = parseDate(t.start), e = parseDate(t.end);
+    const dur = Math.max(1, daysBetween(s, e) + 1);
     totalDur += dur;
     weightedProg += dur * t.progress;
+    if (t.etp !== null) etpTotal += t.etp;
+    if (t.progress === 100) {
+      doneTasks.push(t);
+    } else {
+      if (e < today) lateTasks.push(t);
+      else if (s <= today && e >= today) activeTasks.push(t);
+      else if (s > today) pendingTasks.push(t);
+      const completedDays = Math.floor(dur * t.progress / 100);
+      const remStart = new Date(s); remStart.setDate(remStart.getDate() + completedDays);
+      if (remStart <= e) joRestants += countWorkingDays(remStart, e);
+    }
   });
+
   const avgProgress = totalDur > 0 ? Math.round(weightedProg / totalDur) : 0;
-
-  const etpTotal = visibleTasks.reduce((sum, t) => sum + (t.etp !== null ? t.etp : 0), 0);
-
-  let joRestants = 0;
-  visibleTasks.forEach(t => {
-    if (t.progress >= 100) return;
-    const s = parseDate(t.start), e = parseDate(t.end);
-    const totalDays = daysBetween(s, e) + 1;
-    const completedDays = Math.floor(totalDays * t.progress / 100);
-    const remStart = new Date(s); remStart.setDate(remStart.getDate() + completedDays);
-    if (remStart <= e) joRestants += countWorkingDays(remStart, e);
-  });
-
-  const teamsCount = new Set(visibleTasks.map(t => t.application)).size;
+  const teamsCount = teamsSet.size;
 
   // Store drill data for click handlers
   _kpiDrillData['avancement']  = { label: 'Avancement — toutes les tâches', list: [...visibleTasks].sort((a,b) => a.progress - b.progress) };
@@ -1013,24 +1188,28 @@ function renderGantt(rows, visibleTasks, taskIndexMap) {
   body.style.width = totalWidth + 'px';
   let html = '';
 
-  // Grid rows
-  rows.forEach(row => {
-    if (row.type === 'group') {
-      html += `<div class="gantt-group-row">${escapeHtml(row.application)}</div>`;
-      return;
-    }
-
-    let cells = '';
-    for (let i = 0; i < days; i++) {
-      const d = new Date(range.start); d.setDate(d.getDate()+i);
-      const isWeekend = d.getDay()===0||d.getDay()===6;
-      const isToday = d.getTime()===today.getTime();
-      let cls = 'gantt-cell';
+  // Single shared grid background — replaces per-row cells (O(days) instead of O(days x rows))
+  let gridHtml = '<div class="gantt-grid-bg">';
+  for (let i = 0; i < days; i++) {
+      const d = new Date(range.start); d.setDate(d.getDate() + i);
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      const isToday = d.getTime() === today.getTime();
+      let cls = 'gantt-grid-col';
       if (isWeekend) cls += ' weekend';
       if (isToday) cls += ' today';
-      cells += `<div class="${cls}" style="width:${cellWidth}px"></div>`;
-    }
-    html += `<div class="gantt-row" data-id="${row.task.id}">${cells}</div>`;
+      gridHtml += `<div class="${cls}" style="left:${i * cellWidth}px;width:${cellWidth}px"></div>`;
+  }
+  gridHtml += '</div>';
+  html += gridHtml;
+
+  // Grid rows — empty, visual background handled by gantt-grid-bg above
+  rows.forEach(row => {
+      if (row.type === 'group') {
+        const releaseGroupClass = groupBy === 'release' ? ' gantt-group-release-row' : '';
+        html += `<div class="gantt-group-row${releaseGroupClass}"><span class="gantt-group-label">${escapeHtml(row.label)}</span></div>`;
+        return;
+      }
+      html += `<div class="gantt-row" data-id="${row.task.id}"></div>`;
   });
 
   // Dependencies
@@ -1046,6 +1225,12 @@ function renderGantt(rows, visibleTasks, taskIndexMap) {
   // Bars overlay
   html += '<div class="gantt-bar-container">';
   rows.forEach((row, idx) => {
+    if (row.type === 'group') {
+      const top = idx * ROW_HEIGHT + 7;
+      html += buildGroupSummaryBar(row, range, top);
+      return;
+    }
+
     if (row.type !== 'task') return;
 
     const t = row.task;
@@ -1184,6 +1369,7 @@ function getTaskById(id) {
 function buildTaskTooltipHtml(task) {
   const ccLabel = task.cc || 'Sans CC';
   const porteurLabel = task.porteur || 'Non renseigné';
+  const releaseLabel = task.release || 'Sans release';
   const priorityLabel = task.priority || 'P3';
   const statusLabel = task.status || 'Non renseigné';
   const etpLabel = task.etp === null ? 'Non renseigné' : String(task.etp).replace('.', ',');
@@ -1195,6 +1381,7 @@ function buildTaskTooltipHtml(task) {
   return `
     <div class="tt-title">${escapeHtml(task.name)}</div>
     <div class="tt-line"><strong>Team RS/TL:</strong> ${escapeHtml(task.application)}</div>
+    <div class="tt-line"><strong>Release:</strong> ${escapeHtml(releaseLabel)}</div>
     <div class="tt-line"><strong>CC:</strong> ${escapeHtml(ccLabel)}</div>
     <div class="tt-line"><strong>Lead:</strong> ${escapeHtml(porteurLabel)}</div>
     <div class="tt-line"><strong>Priorité:</strong> ${escapeHtml(priorityLabel)}</div>
@@ -1276,22 +1463,85 @@ function onDrag(e) {
 
   if (dragState.mode === 'reorder') {
     reorderTaskFromBarDrag(e.clientY);
+    render();
   } else if (dragState.mode === 'resize-right') {
     const ne = new Date(origE); ne.setDate(ne.getDate()+dayDelta);
     if (ne >= origS) {
       task.end = fmt(ne);
-      // Réévalue la progression : conserve les JO réalisés, recalcule sur la nouvelle durée
       const joTotal = countWorkingDays(origS, ne);
       if (joTotal > 0) {
         const joRealises = Math.round(dragState.origProgress / 100 * countWorkingDays(origS, origE));
         task.progress = Math.min(100, Math.round(joRealises / joTotal * 100));
       }
     }
+    updateDraggedBarDOM();
   } else if (dragState.mode === 'resize-left') {
     const ns = new Date(origS); ns.setDate(ns.getDate()+dayDelta);
     if (ns <= origE) task.start = fmt(ns);
+    updateDraggedBarDOM();
   }
-  render();
+}
+
+function updateDraggedBarDOM() {
+  const task = tasks.find(t => t.id === dragState.id);
+  if (!task) return;
+  const bar = document.querySelector(`.gantt-bar[data-id="${dragState.id}"]`);
+  if (!bar) return;
+
+  const range = getRange(getVisibleTasks());
+  const s = parseDate(task.start);
+  const e = parseDate(task.end);
+  const left = daysBetween(range.start, s) * cellWidth;
+  const width = (daysBetween(s, e) + 1) * cellWidth;
+
+  bar.style.left = left + 'px';
+  bar.style.width = width + 'px';
+
+  // Progress bar
+  const progressBar = bar.querySelector('.bar-progress');
+  if (progressBar) progressBar.style.width = task.progress + '%';
+
+  // Remaining days badge
+  const progressRatio = Math.max(0, Math.min(100, task.progress)) / 100;
+  const progressPx = width * progressRatio;
+  const totalDays = daysBetween(s, e) + 1;
+  const completedDays = Math.floor(totalDays * progressRatio);
+  const nonProgressWidth = width - progressPx;
+  let remainingBadge = bar.querySelector('.bar-remaining-days');
+  if (showRemainingJo && completedDays < totalDays && nonProgressWidth >= 34) {
+    const remStart = new Date(s); remStart.setDate(remStart.getDate() + completedDays);
+    const remWorkDays = countWorkingDays(remStart, e);
+    if (remWorkDays > 0) {
+      if (!remainingBadge) {
+        remainingBadge = document.createElement('div');
+        remainingBadge.className = 'bar-remaining-days';
+        bar.insertBefore(remainingBadge, bar.querySelector('.reorder-handle').nextSibling);
+      }
+      remainingBadge.textContent = `${remWorkDays} JO`;
+    } else if (remainingBadge) { remainingBadge.remove(); }
+  } else if (remainingBadge) { remainingBadge.remove(); }
+
+  // Extension rouge
+  const plannedEnd = parseDate(task.plannedEnd || task.end);
+  let ext = bar.querySelector('.bar-extension');
+  if (e > plannedEnd) {
+    const origRightX = (daysBetween(range.start, plannedEnd) + 1) * cellWidth;
+    const extLeft = origRightX - left;
+    const extWidth = (daysBetween(range.start, e) + 1) * cellWidth - origRightX;
+    if (extWidth > 0) {
+      if (!ext) { ext = document.createElement('div'); ext.className = 'bar-extension'; bar.appendChild(ext); }
+      ext.style.left = extLeft + 'px';
+      ext.style.width = extWidth + 'px';
+    }
+  } else if (ext) { ext.remove(); }
+
+  // Task list row dates
+  const taskRow = document.querySelector(`.task-row[data-id="${dragState.id}"]`);
+  if (taskRow) {
+    const dateCells = taskRow.querySelectorAll('.task-date');
+    if (dateCells[0]) dateCells[0].textContent = formatShort(task.start);
+    if (dateCells[1]) dateCells[1].textContent = formatShort(task.end);
+  }
 }
 
 function endDrag() {
@@ -1324,7 +1574,7 @@ function reorderTaskFromBarDrag(pointerY) {
   if (!draggedTask || !hoveredRow || hoveredRow.type !== 'task') return;
 
   const targetTask = hoveredRow.task;
-  if (!sameApplication(draggedTask, targetTask)) return;
+  if (!sameGroupingBucket(draggedTask, targetTask)) return;
   const targetIndex = tasks.findIndex(t => t.id === targetTask.id);
 
   if (targetIndex === currentIndex || currentIndex === -1) return;
@@ -1390,7 +1640,7 @@ function onTaskDragOver(e, id) {
   const row = e.currentTarget;
   const draggedTask = tasks.find(task => task.id === reorderState.draggedId);
   const targetTask = tasks.find(task => task.id === id);
-  if (!sameApplication(draggedTask, targetTask)) return;
+  if (!sameGroupingBucket(draggedTask, targetTask)) return;
   const rect = row.getBoundingClientRect();
   const placement = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
 
@@ -1409,7 +1659,7 @@ function onTaskListDragOver(e) {
 
   const draggedTask = tasks.find(task => task.id === reorderState.draggedId);
   const targetTask = tasks.find(task => task.id === lastRow.dataset.id);
-  if (!sameApplication(draggedTask, targetTask)) return;
+  if (!sameGroupingBucket(draggedTask, targetTask)) return;
 
   const rect = lastRow.getBoundingClientRect();
   if (e.clientY >= rect.top + rect.height / 2) {
@@ -1506,7 +1756,7 @@ function moveTask(draggedId, targetId, placement) {
   const fromIndex = tasks.findIndex(t => t.id === draggedId);
   const targetIndex = tasks.findIndex(t => t.id === targetId);
   if (fromIndex === -1 || targetIndex === -1 || fromIndex === targetIndex) return;
-  if (!sameApplication(tasks[fromIndex], tasks[targetIndex])) return;
+  if (!sameGroupingBucket(tasks[fromIndex], tasks[targetIndex])) return;
 
   const previousPositions = captureTaskRowPositions();
   const [draggedTask] = tasks.splice(fromIndex, 1);
@@ -1530,6 +1780,7 @@ function openModal(id) {
   document.getElementById('taskStart').value = task ? task.start : defaults.start;
   document.getElementById('taskEnd').value = task ? task.end : defaults.end;
   document.getElementById('taskApplication').value = task ? task.application : '';
+  document.getElementById('taskRelease').value = task ? (task.release || '') : '';
   document.getElementById('taskCc').value = task ? task.cc : '';
   document.getElementById('taskPorteur').value = task ? task.porteur : '';
   document.getElementById('taskPriority').value = task ? (task.priority || 'P3') : 'P3';
@@ -1646,6 +1897,7 @@ function saveTask() {
   const start = document.getElementById('taskStart').value;
   const end = document.getElementById('taskEnd').value;
   const application = document.getElementById('taskApplication').value.trim() || 'Sans application';
+  const release = document.getElementById('taskRelease').value.trim() || 'Sans release';
   const cc = document.getElementById('taskCc').value.trim();
   const porteur = document.getElementById('taskPorteur').value.trim();
   const priority = document.getElementById('taskPriority').value || 'P3';
@@ -1665,9 +1917,9 @@ function saveTask() {
     const t = tasks.find(t => t.id === id);
     // Réinitialise plannedEnd si la date de fin a été modifiée explicitement dans la modal
     const newPlannedEnd = (t && t.end !== end) ? end : (t ? t.plannedEnd : end);
-    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, priority, status, etp, start, end, plannedEnd: newPlannedEnd, progress, color, dependencies, milestones })); }
+    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, release, cc, porteur, priority, status, etp, start, end, plannedEnd: newPlannedEnd, progress, color, dependencies, milestones })); }
   } else {
-    createTask({ name, application, cc, porteur, priority, status, etp, start, end, plannedEnd: end, progress, color, dependencies, milestones });
+    createTask({ name, application, release, cc, porteur, priority, status, etp, start, end, plannedEnd: end, progress, color, dependencies, milestones });
     closeModal();
     return;
   }
@@ -1863,6 +2115,7 @@ function generateDemoWorkload() {
   const teamCount = 10;
   const minTasks = 15;
   const maxTasks = 20;
+  const releasePool = ['R1', 'R2', 'R3', 'R4'];
   const ccPool = ['DEV', 'QA', 'OPS', 'RUN', 'DATA', 'SEC'];
   const leadPool = ['A. Martin', 'L. Bernard', 'N. Leroy', 'S. Dubois', 'M. Moreau', 'P. Simon', 'C. Fontaine', 'R. Lopez'];
   const steps = ['Cadrage', 'Conception', 'Dev API', 'Dev Front', 'Tests', 'Recette', 'Déploiement', 'Stabilisation', 'Run'];
@@ -1897,6 +2150,7 @@ function generateDemoWorkload() {
         id: uid(),
         name: `${pickRandom(steps)} ${String(i + 1).padStart(2, '0')}`,
         application: teamName,
+        release: pickRandom(releasePool),
         cc: pickRandom(ccPool),
         porteur: pickRandom(leadPool),
         etp: [0.3, 0.5, 0.8, 1, 1.5, 2][randInt(0, 5)],
@@ -2000,6 +2254,8 @@ document.getElementById('taskStatus').addEventListener('input', function() {
 loadTasks();
 loadExtensionColor();
 loadShowRemainingJo();
+loadGroupBy();
+loadReleaseCollapsedGroups();
 refreshZoomButtonLabel();
 render();
 goToToday();
