@@ -115,6 +115,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .zoom-options.open { display:flex; flex-direction:column; gap:6px; }
 .zoom-options button { font-size:12px; }
 .task-panel-header { display:grid; grid-template-columns: 40px 1fr 90px 90px; align-items:center; min-height:56px; padding:0 6px; font-size:12px; font-weight:600; color:var(--text2); border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.5px; }
+.group-bulk-controls { display:flex; flex-direction:column; gap:4px; align-items:center; justify-content:center; }
+.group-bulk-btn { width:22px; height:18px; border-radius:4px; border:1px solid var(--border); background:rgba(255,255,255,0.06); color:var(--text); font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.group-bulk-btn:hover { background:var(--accent2); }
 .task-list { flex:1; overflow-y:auto; }
 .task-group-row { display:flex; align-items:center; height:36px; padding:0 10px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text); font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
 .task-group-row span:last-child { margin-left:auto; color:var(--text2); font-weight:600; }
@@ -334,6 +337,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .task-tooltip .tt-title { font-size:13px; font-weight:700; color:#fff; margin-bottom:6px; }
 .task-tooltip .tt-line { color:var(--text2); margin-bottom:3px; }
 .task-tooltip .tt-line strong { color:var(--text); font-weight:700; }
+.task-tooltip .tt-list { margin:6px 0 0 16px; padding:0; color:var(--text); max-height:180px; overflow:auto; }
+.task-tooltip .tt-list li { margin:2px 0; }
 </style>
 </head>
 <body>
@@ -389,7 +394,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   <!-- Task List -->
   <div class="task-panel">
     <div class="task-panel-header">
-      <span></span><span>Tâche</span><span>Début</span><span>Fin</span>
+      <div class="group-bulk-controls">
+        <button class="group-bulk-btn" onclick="expandAllVisibleGroups()" title="Tout étendre">+</button>
+        <button class="group-bulk-btn" onclick="collapseAllVisibleGroups()" title="Tout réduire">-</button>
+      </div><span>Tâche</span><span>Début</span><span>Fin</span>
     </div>
     <div class="task-list" id="taskList" ondragover="onTaskListDragOver(event)" ondrop="dropTaskAtEnd(event)"></div>
   </div>
@@ -510,10 +518,11 @@ let acCurrentInput = null;
 let extensionColor = '#ff3333';
 let showRemainingJo = true;
 let groupBy = 'application';
-let releaseCollapsedGroups = new Set();
+let collapsedGroups = new Set();
 let focusedTaskId = null;
 let selectedTaskId = null;
 const workingDaysCache = new Map();
+const groupTooltipData = new Map();
 
 const GROUP_BY_OPTIONS = {
   application: { label: 'Team', fallback: 'Sans application' },
@@ -588,16 +597,16 @@ function loadGroupBy() {
   if (select) select.value = groupBy;
 }
 function saveGroupBy(value) { localStorage.setItem('lightgantt_groupBy', value); }
-function loadReleaseCollapsedGroups() {
+function loadCollapsedGroups() {
   try {
-    const raw = JSON.parse(localStorage.getItem('lightgantt_releaseCollapsedGroups') || '[]');
-    releaseCollapsedGroups = new Set(Array.isArray(raw) ? raw : []);
+    const raw = JSON.parse(localStorage.getItem('lightgantt_collapsedGroups') || '[]');
+    collapsedGroups = new Set(Array.isArray(raw) ? raw : []);
   } catch {
-    releaseCollapsedGroups = new Set();
+    collapsedGroups = new Set();
   }
 }
-function saveReleaseCollapsedGroups() {
-  localStorage.setItem('lightgantt_releaseCollapsedGroups', JSON.stringify([...releaseCollapsedGroups]));
+function saveCollapsedGroups() {
+  localStorage.setItem('lightgantt_collapsedGroups', JSON.stringify([...collapsedGroups]));
 }
 function setShowRemainingJo(value) {
   showRemainingJo = !!value;
@@ -609,21 +618,44 @@ function setGroupBy(value) {
   saveGroupBy(groupBy);
   render();
 }
-function isGroupCollapsed(groupKey) {
-  return groupBy === 'release' && releaseCollapsedGroups.has(groupKey);
+function getScopedGroupKey(groupKey) {
+  return `${groupBy}::${groupKey}`;
 }
-function toggleReleaseGroup(encodedGroupKey) {
-  if (groupBy !== 'release') return;
+function isGroupCollapsed(groupKey) {
+  return collapsedGroups.has(getScopedGroupKey(groupKey));
+}
+function toggleGroup(encodedGroupKey) {
   const groupKey = decodeURIComponent(encodedGroupKey || '');
   if (!groupKey) return;
-  if (releaseCollapsedGroups.has(groupKey)) releaseCollapsedGroups.delete(groupKey);
-  else releaseCollapsedGroups.add(groupKey);
-  saveReleaseCollapsedGroups();
+  const scopedKey = getScopedGroupKey(groupKey);
+  if (collapsedGroups.has(scopedKey)) collapsedGroups.delete(scopedKey);
+  else collapsedGroups.add(scopedKey);
+  saveCollapsedGroups();
   render();
 }
+function toggleReleaseGroup(encodedGroupKey) {
+  toggleGroup(encodedGroupKey);
+}
 function toggleGroupFromList(encodedGroupKey) {
-  if (groupBy !== 'release') return;
-  toggleReleaseGroup(encodedGroupKey);
+  toggleGroup(encodedGroupKey);
+}
+function collapseAllVisibleGroups() {
+  const visibleGroups = getGroupedVisibleRows(getVisibleTasks()).filter(row => row.type === 'group');
+  if (!visibleGroups.length) return;
+  visibleGroups.forEach(row => {
+    if (row.groupKey) collapsedGroups.add(getScopedGroupKey(row.groupKey));
+  });
+  saveCollapsedGroups();
+  render();
+}
+function expandAllVisibleGroups() {
+  const visibleGroups = getGroupedVisibleRows(getVisibleTasks()).filter(row => row.type === 'group');
+  if (!visibleGroups.length) return;
+  visibleGroups.forEach(row => {
+    if (row.groupKey) collapsedGroups.delete(getScopedGroupKey(row.groupKey));
+  });
+  saveCollapsedGroups();
+  render();
 }
 function setExtensionColor(color) {
   extensionColor = color;
@@ -709,6 +741,7 @@ function getVisibleTasks() {
 
 function getGroupedVisibleRows(visibleTasks = getVisibleTasks()) {
   const groups = new Map();
+  groupTooltipData.clear();
 
   visibleTasks.forEach(task => {
     const key = getTaskGroupValue(task);
@@ -721,9 +754,17 @@ function getGroupedVisibleRows(visibleTasks = getVisibleTasks()) {
     const { team, release } = getTaskGroupPartsFromKey(groupKey);
     const collapsed = isGroupCollapsed(groupKey);
     const sortedTasks = [...groupTasks].sort((a, b) => parseDate(a.start) - parseDate(b.start));
+    const taskNames = sortedTasks.map(task => task.name);
     const firstTask = sortedTasks[0];
     const lastTask = [...groupTasks].sort((a, b) => parseDate(b.end) - parseDate(a.end))[0];
     const avgProgress = groupTasks.length ? Math.round(groupTasks.reduce((sum, task) => sum + task.progress, 0) / groupTasks.length) : 0;
+    groupTooltipData.set(groupKey, {
+      label: getTaskGroupLabelFromKey(groupKey),
+      release,
+      team,
+      count: groupTasks.length,
+      taskNames,
+    });
     return [
       {
         type: 'group',
@@ -754,13 +795,55 @@ function buildGroupSummaryBar(row, range, top) {
   const teamLabel = row.team || '';
   const toggleGlyph = row.collapsed ? '+' : '-';
   const encodedGroupKey = encodeURIComponent(row.groupKey || '');
-  return `<div class="gantt-group-bar" style="left:${left}px;top:${top}px;width:${width}px" onclick="toggleReleaseGroup('${encodedGroupKey}')" title="${row.collapsed ? 'Etendre' : 'Reduire'} le groupe">
+  return `<div class="gantt-group-bar" style="left:${left}px;top:${top}px;width:${width}px" onclick="toggleReleaseGroup('${encodedGroupKey}')" onmouseenter="showGroupTooltip(event,'${encodedGroupKey}')" onmousemove="moveTaskTooltip(event)" onmouseleave="hideTaskTooltip()" onwheel="scrollGroupTooltip(event)" title="${row.collapsed ? 'Etendre' : 'Reduire'} le groupe">
     <span class="gantt-group-bar-toggle">${toggleGlyph}</span>
     <div class="gantt-group-bar-progress" style="width:${progress}%"></div>
     <span class="gantt-group-bar-title">${escapeHtml(titleLabel)}</span>
     ${teamLabel ? `<span class="gantt-group-bar-team">${escapeHtml(teamLabel)}</span>` : ''}
     <span class="gantt-group-bar-meta">${countLabel}</span>
   </div>`;
+}
+
+function buildGroupTooltipHtml(group) {
+  const title = group.release || group.label || 'Release';
+  const team = group.team || 'Sans team';
+  const taskCount = group.count || 0;
+  const maxItems = 30;
+  const displayed = (group.taskNames || []).slice(0, maxItems);
+  const hidden = Math.max(0, (group.taskNames || []).length - displayed.length);
+  const listHtml = displayed.length
+    ? `<ul class="tt-list">${displayed.map(name => `<li>${escapeHtml(name)}</li>`).join('')}</ul>`
+    : '<div class="tt-line">Aucune tâche</div>';
+  const hiddenHtml = hidden > 0 ? `<div class="tt-line">+ ${hidden} autre${hidden > 1 ? 's' : ''}</div>` : '';
+  return `
+    <div class="tt-title">Release: ${escapeHtml(title)}</div>
+    <div class="tt-line"><strong>Team:</strong> ${escapeHtml(team)}</div>
+    <div class="tt-line"><strong>Tâches:</strong> ${taskCount}</div>
+    ${listHtml}
+    ${hiddenHtml}
+  `;
+}
+
+function showGroupTooltip(event, encodedGroupKey) {
+  const tooltip = document.getElementById('taskTooltip');
+  if (!tooltip) return;
+  const groupKey = decodeURIComponent(encodedGroupKey || '');
+  const group = groupTooltipData.get(groupKey);
+  if (!group) return;
+  tooltipTaskId = `group:${groupKey}`;
+  tooltip.innerHTML = buildGroupTooltipHtml(group);
+  tooltip.classList.add('visible');
+  moveTaskTooltip(event);
+}
+
+function scrollGroupTooltip(event) {
+  if (!tooltipTaskId || !String(tooltipTaskId).startsWith('group:')) return;
+  const tooltip = document.getElementById('taskTooltip');
+  if (!tooltip) return;
+  const list = tooltip.querySelector('.tt-list');
+  if (!list || list.scrollHeight <= list.clientHeight) return;
+  event.preventDefault();
+  list.scrollTop += event.deltaY;
 }
 
 function getVisibleTaskIndexMap(rows = getGroupedVisibleRows()) {
@@ -961,11 +1044,9 @@ function renderTaskList(rows) {
   const el = document.getElementById('taskList');
   el.innerHTML = rows.map(row => {
     if (row.type === 'group') {
-      const releaseToggle = groupBy === 'release' ? (row.collapsed ? ' [+]' : ' [-]') : '';
+      const groupToggle = row.collapsed ? ' [+]' : ' [-]';
       const encodedGroupKey = encodeURIComponent(row.groupKey || '');
-      const clickableClass = groupBy === 'release' ? ' clickable' : '';
-      const clickHandler = groupBy === 'release' ? ` onclick="toggleGroupFromList('${encodedGroupKey}')"` : '';
-      return `<div class="task-group-row${clickableClass}"${clickHandler}><span>${escapeHtml(row.label)}${releaseToggle}</span><span>${row.count} tâche${row.count > 1 ? 's' : ''}</span></div>`;
+      return `<div class="task-group-row clickable" onclick="toggleGroupFromList('${encodedGroupKey}')"><span>${escapeHtml(row.label)}${groupToggle}</span><span>${row.count} tâche${row.count > 1 ? 's' : ''}</span></div>`;
     }
 
     const task = row.task;
@@ -2255,7 +2336,7 @@ loadTasks();
 loadExtensionColor();
 loadShowRemainingJo();
 loadGroupBy();
-loadReleaseCollapsedGroups();
+loadCollapsedGroups();
 refreshZoomButtonLabel();
 render();
 goToToday();
