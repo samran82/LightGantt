@@ -249,6 +249,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .modal .btn-save { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
 .modal .btn-cancel { background:var(--surface2); color:var(--text); }
 .modal .btn-delete { background:#6b1a1a; color:#fff; border-color:#6b1a1a; margin-right:auto; }
+.extension-history { margin-top:8px; max-height:140px; overflow-y:auto; border:1px solid var(--border); border-radius:6px; background:rgba(255,255,255,0.02); padding:8px; }
+.ext-history-item { font-size:12px; color:var(--text2); margin-bottom:6px; line-height:1.35; }
+.ext-history-item strong { color:var(--text); }
+.ext-history-item:last-child { margin-bottom:0; }
+.ext-history-empty { font-size:12px; color:var(--text2); }
 
 /* Color picker row */
 .color-options { display:flex; gap:8px; margin-top:6px; }
@@ -485,6 +490,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
     <div class="dependencies-actions">
       <button type="button" class="btn-clear-deps" onclick="clearDependencySelection()">Désélectionner</button>
     </div>
+    <label>Historique extensions</label>
+    <div id="extensionHistoryList" class="extension-history">
+      <div class="ext-history-empty">Aucune extension enregistrée.</div>
+    </div>
     <label>Couleur</label>
     <div class="color-options" id="colorOptions"></div>
     <div class="modal-actions">
@@ -671,6 +680,18 @@ function normalizeTask(task) {
   const parsedEtp = task.etp === '' || task.etp === null || task.etp === undefined ? null : parseFloat(task.etp);
   const rawPriority = String(task.priority || 'P3').toUpperCase();
   const priority = ['P0', 'P1', 'P2', 'P3'].includes(rawPriority) ? rawPriority : 'P3';
+  const rawHistory = Array.isArray(task.endExtensions) ? task.endExtensions : [];
+  const endExtensions = rawHistory
+    .map(item => {
+      if (!item || typeof item !== 'object') return null;
+      const at = (item.at || '').trim();
+      const reason = (item.reason || '').trim();
+      const from = (item.from || '').trim();
+      const to = (item.to || '').trim();
+      if (!at || !reason || !from || !to) return null;
+      return { at, reason, from, to, source: (item.source || 'unknown').trim() || 'unknown' };
+    })
+    .filter(Boolean);
   return {
     id: task.id || uid(),
     name: task.name || 'Tâche sans nom',
@@ -688,7 +709,43 @@ function normalizeTask(task) {
     color: task.color || COLORS[0],
     dependencies: Array.isArray(task.dependencies) ? [...new Set(task.dependencies.filter(Boolean))] : [],
     milestones: Array.isArray(task.milestones) ? task.milestones.map(m => ({ id: m.id || uid(), name: (m.name||'').trim(), date: m.date||'' })).filter(m => m.date && m.name) : [],
+    endExtensions,
   };
+}
+
+function requestExtensionReason(fromDate, toDate) {
+  while (true) {
+    const reason = prompt(`Extension de date de fin\n${fromDate} -> ${toDate}\n\nVeuillez saisir la raison (obligatoire):`);
+    if (reason === null) return null;
+    const trimmed = reason.trim();
+    if (trimmed) return trimmed;
+    alert('La raison est obligatoire pour enregistrer une extension de date de fin.');
+  }
+}
+
+function addEndExtensionHistory(task, fromDate, toDate, reason, source) {
+  if (!task.endExtensions) task.endExtensions = [];
+  task.endExtensions.push({
+    at: fmt(new Date()),
+    reason: String(reason || '').trim(),
+    from: fromDate,
+    to: toDate,
+    source: source || 'unknown',
+  });
+}
+
+function getEndExtensionsHtml(task) {
+  const history = Array.isArray(task?.endExtensions) ? [...task.endExtensions].reverse() : [];
+  if (!history.length) return '<div class="ext-history-empty">Aucune extension enregistrée.</div>';
+  return history.map(item =>
+    `<div class="ext-history-item"><strong>${escapeHtml(item.at)}</strong> - ${escapeHtml(item.from)} -> ${escapeHtml(item.to)}<br>${escapeHtml(item.reason)}</div>`
+  ).join('');
+}
+
+function renderExtensionHistory(task) {
+  const el = document.getElementById('extensionHistoryList');
+  if (!el) return;
+  el.innerHTML = getEndExtensionsHtml(task);
 }
 
 function getTaskGroupValue(task) {
@@ -1459,6 +1516,11 @@ function buildTaskTooltipHtml(task) {
     .filter(Boolean)
     .map(dep => dep.name);
   const depsLabel = deps.length ? escapeHtml(deps.join(', ')) : 'Aucune';
+  const extHistory = Array.isArray(task.endExtensions) ? task.endExtensions : [];
+  const extPreview = extHistory.slice(-3).reverse();
+  const extHtml = extPreview.length
+    ? `<div class="tt-line"><strong>Extensions (${extHistory.length}):</strong></div><ul class="tt-list">${extPreview.map(item => `<li>${escapeHtml(item.at)} - ${escapeHtml(item.from)} -> ${escapeHtml(item.to)} : ${escapeHtml(item.reason)}</li>`).join('')}</ul>`
+    : '<div class="tt-line"><strong>Extensions:</strong> Aucune</div>';
   return `
     <div class="tt-title">${escapeHtml(task.name)}</div>
     <div class="tt-line"><strong>Team RS/TL:</strong> ${escapeHtml(task.application)}</div>
@@ -1472,6 +1534,7 @@ function buildTaskTooltipHtml(task) {
     <div class="tt-line"><strong>Fin:</strong> ${escapeHtml(task.end)}</div>
     <div class="tt-line"><strong>Progression:</strong> ${task.progress}%</div>
     <div class="tt-line"><strong>Dépendances:</strong> ${depsLabel}</div>
+    ${extHtml}
   `;
 }
 
@@ -1626,20 +1689,34 @@ function updateDraggedBarDOM() {
 }
 
 function endDrag() {
-  if (dragState) {
-    if (dragState.mode === 'resize-right') {
-      const task = tasks.find(t => t.id === dragState.id);
-      if (task) {
-        const delta = daysBetween(parseDate(dragState.origEnd), parseDate(task.end));
-        if (delta > 0) cascadeDependentTasks(dragState.id, delta);
-      }
-    }
-    saveTasks();
-    dragState = null;
-    render();
-  }
   document.removeEventListener('mousemove', onDrag);
   document.removeEventListener('mouseup', endDrag);
+
+  if (!dragState) return;
+
+  const currentDrag = dragState;
+  dragState = null;
+  render();
+
+  if (currentDrag.mode === 'resize-right') {
+    const task = tasks.find(t => t.id === currentDrag.id);
+    if (task) {
+      const delta = daysBetween(parseDate(currentDrag.origEnd), parseDate(task.end));
+      if (delta > 0) {
+        const reason = requestExtensionReason(currentDrag.origEnd, task.end);
+        if (reason === null) {
+          task.end = currentDrag.origEnd;
+          task.progress = currentDrag.origProgress;
+        } else {
+          addEndExtensionHistory(task, currentDrag.origEnd, task.end, reason, 'drag');
+          cascadeDependentTasks(currentDrag.id, delta, reason);
+        }
+      }
+    }
+  }
+
+  saveTasks();
+  render();
 }
 
 function reorderTaskFromBarDrag(pointerY) {
@@ -1871,6 +1948,7 @@ function openModal(id) {
   document.getElementById('progressVal').textContent = (task ? task.progress : 0) + '%';
   renderStatusOptions(document.getElementById('taskStatus').value);
   syncProgressJoDays();
+  renderExtensionHistory(task);
   document.getElementById('btnDelete').style.display = task ? '' : 'none';
   renderDependencySelect(task);
   document.getElementById('milestoneList').innerHTML = '';
@@ -1996,9 +2074,19 @@ function saveTask() {
 
   if (id) {
     const t = tasks.find(t => t.id === id);
+    const oldEnd = t ? t.end : end;
+    const endExtended = !!t && parseDate(end) > parseDate(oldEnd);
+    let extensionReason = null;
+    if (endExtended) {
+      extensionReason = requestExtensionReason(oldEnd, end);
+      if (extensionReason === null) return;
+    }
     // Réinitialise plannedEnd si la date de fin a été modifiée explicitement dans la modal
     const newPlannedEnd = (t && t.end !== end) ? end : (t ? t.plannedEnd : end);
-    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, release, cc, porteur, priority, status, etp, start, end, plannedEnd: newPlannedEnd, progress, color, dependencies, milestones })); }
+    if (t) {
+      Object.assign(t, normalizeTask({ ...t, name, application, release, cc, porteur, priority, status, etp, start, end, plannedEnd: newPlannedEnd, progress, color, dependencies, milestones }));
+      if (endExtended && extensionReason) addEndExtensionHistory(t, oldEnd, end, extensionReason, 'modal');
+    }
   } else {
     createTask({ name, application, release, cc, porteur, priority, status, etp, start, end, plannedEnd: end, progress, color, dependencies, milestones });
     closeModal();
@@ -2046,18 +2134,24 @@ function getMilestonesFromModal() {
 }
 
 // ── Cascade dépendances ──
-function cascadeDependentTasks(rootTaskId, deltaEndDays) {
+function cascadeDependentTasks(rootTaskId, deltaEndDays, rootReason = '') {
   if (deltaEndDays <= 0) return;
   const visited = new Set();
+  const rootTask = tasks.find(t => t.id === rootTaskId);
+  const cascadeReason = rootReason
+    ? `Décalage dépendance (${rootTask ? rootTask.name : 'tâche liée'}) : ${rootReason}`
+    : `Décalage dépendance (${rootTask ? rootTask.name : 'tâche liée'})`;
   function cascade(taskId) {
     if (visited.has(taskId)) return;
     visited.add(taskId);
     tasks.forEach(task => {
       if (!task.dependencies.includes(taskId)) return;
+      const prevEnd = task.end;
       const ns = new Date(parseDate(task.start)); ns.setDate(ns.getDate() + deltaEndDays);
       const ne = new Date(parseDate(task.end)); ne.setDate(ne.getDate() + deltaEndDays);
       task.start = fmt(ns);
       task.end = fmt(ne);
+      addEndExtensionHistory(task, prevEnd, task.end, cascadeReason, 'cascade');
       cascade(task.id);
     });
   }
