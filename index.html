@@ -21,25 +21,68 @@
 body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
 /* Toolbar */
-.toolbar { display:flex; align-items:center; gap:10px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap: wrap; }
-.title-block { display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-right:auto; }
+.toolbar { display:flex; align-items:center; gap:10px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:nowrap; }
+.title-block { display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-right:auto; flex:1; min-width:0; }
 .toolbar h1 { font-size:18px; font-weight:700; color:var(--accent); }
 .toolbar button, .toolbar select { background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 14px; cursor:pointer; font-size:13px; transition: background .2s; }
 .toolbar button:hover, .toolbar select:hover { background:var(--accent2); }
 .toolbar .btn-add { background:var(--accent); border-color:var(--accent); font-weight:600; }
 .toolbar .btn-add:hover { background:#c73a52; }
+.quick-actions-rail { display:flex; flex-direction:column; gap:8px; margin-right:4px; }
+.qa-btn {
+  position:relative;
+  width:34px;
+  height:34px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+}
+.qa-btn:hover { background:var(--accent2); }
+.qa-btn.qa-primary { background:var(--accent); border-color:var(--accent); }
+.qa-btn.qa-primary:hover { background:#c73a52; }
+.qa-btn::after {
+  content: attr(data-label);
+  position:absolute;
+  left:calc(100% + 10px);
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,0.88);
+  color:#fff;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .12s;
+  z-index:420;
+}
+.qa-btn:hover::after,
+.settings-menu:hover > .qa-btn::after,
+.zoom-menu:hover > .qa-btn::after { opacity:1; }
 /* Settings gear menu */
 .settings-menu { position:relative; }
 .settings-menu .settings-dropdown { display:none; position:absolute; top:calc(100% + 6px); right:0; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px; box-shadow:0 8px 24px rgba(0,0,0,.45); z-index:300; min-width:210px; flex-direction:column; gap:6px; }
 .settings-menu.open .settings-dropdown { display:flex; }
+.quick-actions-rail .settings-menu .settings-dropdown { left:calc(100% + 10px); right:auto; top:0; }
 .settings-dropdown button { width:100%; text-align:left; justify-content:flex-start; padding:7px 12px; border-radius:6px; font-size:13px; }
 .settings-dropdown .color-row { display:flex; align-items:center; gap:8px; padding:7px 12px; color:var(--text); font-size:13px; border-radius:6px; cursor:pointer; border:none; background:none; width:100%; transition:background .15s; }
 .settings-dropdown .color-row:hover { background:rgba(255,255,255,0.06); }
 .settings-dropdown .color-row input[type=color] { width:24px; height:24px; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:none; padding:0; pointer-events:none; flex-shrink:0; }
+.settings-dropdown .toggle-row { display:flex; align-items:center; gap:10px; padding:7px 12px; color:var(--text); font-size:13px; border-radius:6px; cursor:pointer; user-select:none; transition:background .15s; }
+.settings-dropdown .toggle-row:hover { background:rgba(255,255,255,0.06); }
+.settings-dropdown .toggle-row input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
 .settings-dropdown .sep { height:1px; background:var(--border); margin:2px 0; }
-.filter-row { display:flex; align-items:center; gap:8px; }
+.filter-row { display:flex; align-items:center; gap:8px; min-width:0; width:100%; overflow:hidden; }
 .filter-label { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
-.filter-chip { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.filter-chip { display:flex; align-items:center; gap:6px; flex:1; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; min-width:0; }
 .filter-chip .filter-btn { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text2); border-radius:999px; padding:4px 10px; font-size:12px; cursor:pointer; transition:all .15s; }
 .filter-chip .filter-btn:hover { background:rgba(255,255,255,0.12); color:var(--text); }
 .filter-chip .filter-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
@@ -53,6 +96,22 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 /* Task list panel */
 .task-panel { width:340px; min-width:260px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+.zoom-menu { position:relative; }
+.zoom-options {
+  display:none;
+  position:absolute;
+  top:0;
+  left:calc(100% + 10px);
+  min-width:130px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:6px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);
+  z-index:300;
+}
+.zoom-options.open { display:flex; flex-direction:column; gap:6px; }
+.zoom-options button { font-size:12px; }
 .task-panel-header { display:grid; grid-template-columns: 40px 1fr 90px 90px; align-items:center; min-height:56px; padding:0 6px; font-size:12px; font-weight:600; color:var(--text2); border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.5px; }
 .task-list { flex:1; overflow-y:auto; }
 .task-group-row { display:flex; align-items:center; height:36px; padding:0 10px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text); font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
@@ -89,13 +148,14 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .dependency-path { fill:none; stroke:rgba(255,200,50,0.75); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
 .dependency-dot { fill:rgba(255,200,50,0.9); }
 .gantt-bar-container { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-.gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:default; pointer-events:all; display:flex; align-items:center; gap:6px; padding:0 8px 0 24px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: filter .15s, transform .18s cubic-bezier(.22,1,.36,1); min-width: 6px; }
+.gantt-bar { position:absolute; height:22px; top:7px; border-radius:5px; cursor:default; pointer-events:all; display:flex; align-items:center; gap:6px; padding:0 8px 0 24px; font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:visible; transition: filter .15s, transform .18s cubic-bezier(.22,1,.36,1); min-width: 6px; }
 .gantt-bar:hover { filter:brightness(1.2); }
 .gantt-bar.dragging-time { filter:brightness(1.15); box-shadow:0 10px 24px rgba(0,0,0,.28); cursor:grabbing; }
 .gantt-bar.dragging-reorder { filter:brightness(1.12); box-shadow:0 12px 28px rgba(0,0,0,.3); cursor:ns-resize; }
 .gantt-bar.reorder-animating { z-index:4; }
 .gantt-bar .bar-progress { position:absolute; left:0; top:0; height:100%; border-radius:5px; background:rgba(255,255,255,0.2); pointer-events:none; }
-.gantt-bar .bar-remaining-days { position:absolute; top:2px; height:18px; padding:0 6px; border-radius:10px; background:rgba(0,0,0,0.38); border:1px solid rgba(255,255,255,0.24); color:#fff; font-size:10px; font-weight:700; line-height:18px; text-shadow:none; white-space:nowrap; pointer-events:none; z-index:3; transform:translateX(-50%); }
+.gantt-bar .bar-remaining-days { position:absolute; top:50%; left:calc(100% + 8px); height:18px; padding:0 6px; border-radius:10px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.24); color:#fff; font-size:10px; font-weight:700; line-height:18px; text-shadow:none; white-space:nowrap; pointer-events:none; z-index:3; transform:translateY(-50%); }
+.gantt-bar .bar-title { position:relative; z-index:1; display:block; min-width:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .gantt-bar .reorder-handle { position:absolute; left:6px; top:4px; bottom:4px; width:12px; border-radius:4px; background:rgba(255,255,255,0.14); cursor:ns-resize; display:flex; align-items:center; justify-content:center; font-size:9px; letter-spacing:-1px; color:rgba(255,255,255,0.9); text-shadow:none; z-index:2; }
 .gantt-bar .reorder-handle:hover { background:rgba(255,255,255,0.24); }
 .gantt-bar .resize-handle { position:absolute; top:0; width:8px; height:100%; cursor:col-resize; pointer-events:all; }
@@ -106,6 +166,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .bar-link-handle { position:absolute; top:-8px; right:-7px; width:14px; height:14px; border-radius:50%; background:var(--accent); border:2px solid #fff; cursor:crosshair; pointer-events:all; opacity:0; transition:opacity .15s; z-index:10; box-shadow:0 2px 4px rgba(0,0,0,.5); }
 .gantt-bar:hover .bar-link-handle { opacity:1; }
 .gantt-bar.link-target { outline:2px solid #ffd166; outline-offset:2px; filter:brightness(1.35); }
+.gantt-bar.focused-kpi { outline:3px solid var(--accent); outline-offset:2px; filter:brightness(1.25); box-shadow:0 0 12px rgba(233,69,96,0.6); }
 
 /* Bar extension date fin */
 .bar-extension { position:absolute; top:0; height:100%; background:var(--extension-color, #ff3333); border-radius:0 5px 5px 0; pointer-events:none; z-index:1; opacity:0.9; overflow:hidden; }
@@ -165,32 +226,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 .progress-container .progress-jo:focus { border-color:var(--accent); outline:none; }
 .progress-jo-label { font-size:12px; color:var(--text2); white-space:nowrap; flex-shrink:0; }
 
-/* Add task footer */
-.task-panel-footer { border-top:1px solid var(--border); flex-shrink:0; background:rgba(255,255,255,0.02); }
-.task-panel-footer .footer-toggle-btn { display:flex; width:100%; padding:9px 14px; background:none; border:none; color:var(--text2); font-size:13px; cursor:pointer; gap:8px; align-items:center; transition:background .15s, color .15s; text-align:left; }
-.task-panel-footer .footer-toggle-btn:hover { background:rgba(255,255,255,0.05); color:var(--text); }
-.task-panel-footer .footer-toggle-btn .toggle-icon { font-size:18px; color:var(--accent); line-height:1; font-weight:700; }
-.task-panel-footer.collapsed .footer-form { display:none; }
-.task-panel-footer:not(.collapsed) .footer-toggle-btn { display:none; }
-.task-panel-footer .footer-form { display:grid; grid-template-columns: 40px repeat(6, minmax(0, 1fr)); gap:6px; align-items:center; padding:10px 8px; }
-.task-panel-footer input { width:100%; min-width:0; height:30px; padding:0 8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; }
-.task-panel-footer input:focus { border-color:var(--accent); }
-.task-panel-footer .inline-add-button { width:30px; height:30px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-size:18px; line-height:1; cursor:pointer; transition: filter .15s, transform .15s; }
-.task-panel-footer .inline-add-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
-.task-panel-footer .inline-add-button:active { transform:translateY(0); }
-.task-panel-footer .inline-add-button { grid-column: 1; grid-row: 2 / span 3; align-self:stretch; height:auto; }
-.task-panel-footer .line1-task { grid-column: 2 / span 2; grid-row: 2; }
-.task-panel-footer .line1-start { grid-column: 4 / span 2; grid-row: 2; }
-.task-panel-footer .line1-end { grid-column: 6 / span 2; grid-row: 2; }
-.task-panel-footer .line2-application { grid-column: 2 / span 3; grid-row: 3; }
-.task-panel-footer .line2-cc { grid-column: 5 / span 3; grid-row: 3; }
-.task-panel-footer .line3-porteur { grid-column: 2 / span 4; grid-row: 4; }
-.task-panel-footer .line3-etp { grid-column: 6 / span 2; grid-row: 4; }
-.task-panel-footer .footer-form-header { grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
-.task-panel-footer .footer-form-header span { font-size:12px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; }
-.task-panel-footer .footer-collapse-btn { background:none; border:none; color:var(--text2); font-size:16px; cursor:pointer; padding:2px 6px; border-radius:4px; line-height:1; transition:background .15s, color .15s; }
-.task-panel-footer .footer-collapse-btn:hover { background:rgba(255,255,255,0.08); color:var(--text); }
-
 @media (max-width: 980px) {
   .main { flex-direction:column; }
   .task-panel { width:100%; min-width:0; max-height:45vh; border-right:none; border-bottom:1px solid var(--border); }
@@ -199,16 +234,12 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 @media (max-width: 760px) {
   .toolbar { padding:8px 10px; gap:8px; }
-  .title-block { width:100%; }
-  .task-panel-footer .footer-form { grid-template-columns: 36px repeat(2, minmax(0, 1fr)); }
-  .task-panel-footer .inline-add-button { width:32px; grid-column:1; grid-row:2 / span 6; }
-  .task-panel-footer .line1-task { grid-column:2 / span 2; grid-row:2; }
-  .task-panel-footer .line1-start { grid-column:2 / span 2; grid-row:3; }
-  .task-panel-footer .line1-end { grid-column:2 / span 2; grid-row:4; }
-  .task-panel-footer .line2-application { grid-column:2 / span 2; grid-row:5; }
-  .task-panel-footer .line2-cc { grid-column:2 / span 2; grid-row:6; }
-  .task-panel-footer .line3-porteur { grid-column:2 / span 2; grid-row:7; }
-  .task-panel-footer .line3-etp { grid-column:2 / span 2; grid-row:8; }
+  .title-block { width:auto; }
+  .quick-actions-rail { gap:6px; }
+  .qa-btn { width:30px; height:30px; font-size:14px; }
+  .qa-btn::after { display:none; }
+  .quick-actions-rail .settings-menu .settings-dropdown,
+  .zoom-options { left:0; top:calc(100% + 6px); }
   .modal-row-2 { grid-template-columns:1fr 1fr; }
   .modal-row-3 { grid-template-columns:1fr 1fr; }
   .modal-row-4 { grid-template-columns:1fr 1fr; }
@@ -216,6 +247,46 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
   .modal h2 { margin-bottom:12px; }
   .modal .modal-actions { position:sticky; bottom:-14px; background:var(--surface); padding-top:10px; }
 }
+
+/* KPI Bar */
+.kpi-bar { display:flex; align-items:center; gap:0; padding:0 16px; height:42px; background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; overflow-x:auto; overflow-y:hidden; }
+.kpi-bar::-webkit-scrollbar { height:3px; }
+.kpi-bar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.kpi-item { display:flex; align-items:center; gap:8px; padding:0 18px; border-right:1px solid var(--border); height:100%; white-space:nowrap; flex-shrink:0; }
+.kpi-item:first-child { padding-left:0; }
+.kpi-item:last-child { border-right:none; }
+.kpi-label { font-size:10px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.6px; }
+.kpi-value { font-size:15px; font-weight:700; color:var(--text); }
+.kpi-value.kpi-red { color:#e94560; }
+.kpi-value.kpi-green { color:#06d6a0; }
+.kpi-value.kpi-orange { color:#ffd166; }
+.kpi-value.kpi-blue { color:#00b4d8; }
+.kpi-item.kpi-clickable { cursor:pointer; transition:background .15s; border-radius:6px; }
+.kpi-item.kpi-clickable:hover { background:rgba(255,255,255,0.06); }
+.kpi-item.kpi-clickable:hover .kpi-label { color:var(--text); }
+@media (max-width:760px) { .kpi-bar { height:36px; padding:0 10px; } .kpi-item { padding:0 12px; } .kpi-label { font-size:9px; } .kpi-value { font-size:13px; } }
+
+/* KPI Drill panel */
+.kpi-drill-overlay { position:fixed; inset:0; z-index:160; display:none; pointer-events:none; }
+.kpi-drill-overlay.active { display:block; }
+.kpi-drill-panel { position:absolute; top:0; right:0; width:420px; max-width:96vw; height:100vh; background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; box-shadow:-8px 0 32px rgba(0,0,0,.4); animation:slideInRight .18s cubic-bezier(.22,1,.36,1); pointer-events:auto; }
+@keyframes slideInRight { from { transform:translateX(40px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+.kpi-drill-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.kpi-drill-title { font-size:14px; font-weight:700; color:var(--text); }
+.kpi-drill-count { font-size:12px; color:var(--text2); margin-left:6px; font-weight:400; }
+.kpi-drill-close { background:none; border:none; color:var(--text2); font-size:20px; cursor:pointer; padding:2px 6px; border-radius:4px; line-height:1; transition:background .15s, color .15s; }
+.kpi-drill-close:hover { background:rgba(255,255,255,0.08); color:var(--text); }
+.kpi-drill-body { flex:1; overflow-y:auto; padding:8px 0; }
+.kpi-drill-row { display:grid; grid-template-columns:10px 1fr auto; align-items:center; gap:10px; padding:9px 16px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; transition:background .12s; }
+.kpi-drill-row:hover { background:var(--row-hover); }
+.kpi-drill-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+.kpi-drill-name { font-size:13px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.kpi-drill-meta { font-size:11px; color:var(--text2); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.kpi-drill-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.kpi-drill-text { text-align:right; }
+.kpi-drill-prog { font-size:12px; font-weight:700; }
+.kpi-drill-dates { font-size:10px; color:var(--text2); margin-top:2px; }
+.kpi-drill-empty { padding:32px 16px; text-align:center; color:var(--text2); font-size:13px; }
 
 /* Tooltip */
 .task-tooltip { position:fixed; z-index:200; max-width:320px; padding:10px 12px; background:rgba(15,52,96,0.96); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,.35); color:var(--text); font-size:12px; line-height:1.35; pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .12s, transform .12s; }
@@ -229,30 +300,41 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 <!-- Toolbar -->
 <div class="toolbar">
+  <div class="quick-actions-rail">
+    <div class="settings-menu" id="settingsMenu">
+      <button class="qa-btn" data-label="Paramètres" title="Paramètres" onclick="toggleSettingsMenu()">⚙</button>
+      <div class="settings-dropdown">
+        <button onclick="exportJSON();toggleSettingsMenu()">⬇ Export JSON</button>
+        <button onclick="document.getElementById('importInput').click();toggleSettingsMenu()">⬆ Import JSON</button>
+        <button onclick="generateDemoWorkload();toggleSettingsMenu()">⚡ Générer 10 Teams démo</button>
+        <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
+        <div class="sep"></div>
+        <label class="toggle-row" for="showRemainingJoToggle">
+          <input type="checkbox" id="showRemainingJoToggle" checked onchange="setShowRemainingJo(this.checked)">
+          Afficher reste JO
+        </label>
+        <label class="color-row" for="extensionColorPicker">Couleur extension
+          <input type="color" id="extensionColorPicker" value="#ff3333" onchange="setExtensionColor(this.value)" style="margin-left:auto;">
+        </label>
+      </div>
+    </div>
+    <div class="zoom-menu" id="zoomMenu">
+      <button id="zoomToggleBtn" class="qa-btn" data-label="Zoom: Semaine" title="Zoom: Semaine" onclick="toggleZoomMenu()">◫</button>
+      <div class="zoom-options" id="zoomOptions">
+        <button onclick="setZoomAndClose('day')">Jour</button>
+        <button onclick="setZoomAndClose('week')">Semaine</button>
+        <button onclick="setZoomAndClose('month')">Mois</button>
+      </div>
+    </div>
+    <button class="qa-btn" data-label="Aujourd'hui" title="Aujourd'hui" onclick="goToToday()">◉</button>
+    <button class="qa-btn qa-primary" data-label="Nouvelle tâche" title="Nouvelle tâche" onclick="openModal(null)">+</button>
+  </div>
   <div class="title-block">
     <h1>LightGantt</h1>
     <div class="filter-row"><span class="filter-label">CC:</span><div class="filter-chip" id="ccFilterButtons"></div></div>
     <div class="filter-row"><span class="filter-label">Team:</span><div class="filter-chip" id="teamFilterButtons"></div></div>
   </div>
-  <select id="zoomLevel" onchange="changeZoom(this.value)">
-    <option value="day">Jour</option>
-    <option value="week" selected>Semaine</option>
-    <option value="month">Mois</option>
-  </select>
-  <button class="btn-add" onclick="openModal(null)">+ Nouvelle tâche</button>
-  <button onclick="goToToday()">Aujourd'hui</button>
-  <div class="settings-menu" id="settingsMenu">
-    <button onclick="toggleSettingsMenu()" title="Paramètres">&#9881;</button>
-    <div class="settings-dropdown">
-      <button onclick="exportJSON();toggleSettingsMenu()">⬇ Export JSON</button>
-      <button onclick="document.getElementById('importInput').click();toggleSettingsMenu()">⬆ Import JSON</button>
-      <input type="file" id="importInput" accept=".json" style="display:none" onchange="importJSON(event)">
-      <div class="sep"></div>
-      <label class="color-row" for="extensionColorPicker">Couleur extension
-        <input type="color" id="extensionColorPicker" value="#ff3333" onchange="setExtensionColor(this.value)" style="margin-left:auto;">
-      </label>
-    </div>
-  </div>
+
 </div>
 
 <!-- Main -->
@@ -263,28 +345,25 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
       <span></span><span>Tâche</span><span>Début</span><span>Fin</span>
     </div>
     <div class="task-list" id="taskList" ondragover="onTaskListDragOver(event)" ondrop="dropTaskAtEnd(event)"></div>
-    <div class="task-panel-footer collapsed" id="taskPanelFooter">
-      <button class="footer-toggle-btn" onclick="toggleInlineForm()"><span class="toggle-icon">+</span> Nouvelle tâche rapide</button>
-      <div class="footer-form">
-        <div class="footer-form-header">
-          <span>Nouvelle tâche rapide</span>
-          <button class="footer-collapse-btn" onclick="toggleInlineForm()" title="Réduire">✕</button>
-        </div>
-        <button class="inline-add-button" onclick="createInlineTask()" aria-label="Ajouter une tâche">+</button>
-        <input class="line1-task" type="text" id="inlineTaskName" placeholder="Nouvelle tâche">
-        <input class="line1-start" type="date" id="inlineTaskStart">
-        <input class="line1-end" type="date" id="inlineTaskEnd">
-        <input class="line2-application" type="text" id="inlineTaskApplication" placeholder="Team RS/TL" data-ac="application">
-        <input class="line2-cc" type="text" id="inlineTaskCc" placeholder="CC" data-ac="cc">
-        <input class="line3-porteur" type="text" id="inlineTaskPorteur" placeholder="Lead" data-ac="porteur">
-        <input class="line3-etp" type="number" id="inlineTaskEtp" placeholder="ETP" min="0" step="0.1">
-      </div>
-    </div>
   </div>
   <!-- Gantt Chart -->
   <div class="gantt-panel" id="ganttPanel">
     <div class="gantt-header" id="ganttHeader"></div>
     <div class="gantt-body" id="ganttBody"></div>
+  </div>
+</div>
+
+<!-- KPI Bar -->
+<div class="kpi-bar" id="kpiBar"></div>
+
+<!-- KPI Drill panel -->
+<div class="kpi-drill-overlay" id="kpiDrillOverlay">
+  <div class="kpi-drill-panel" id="kpiDrillPanel">
+    <div class="kpi-drill-header">
+      <span><span class="kpi-drill-title" id="kpiDrillTitle"></span><span class="kpi-drill-count" id="kpiDrillCount"></span></span>
+      <button class="kpi-drill-close" onclick="closeKpiDrill()" title="Fermer">✕</button>
+    </div>
+    <div class="kpi-drill-body" id="kpiDrillBody"></div>
   </div>
 </div>
 
@@ -327,6 +406,22 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
       <div><label>Lead</label><input type="text" id="taskPorteur" placeholder="Lead" data-ac="porteur"></div>
       <div><label>ETP</label><input type="number" id="taskEtp" min="0" step="0.1" placeholder="Ex: 0.5"></div>
     </div>
+    <div class="modal-row-2">
+      <div>
+        <label>Priorité</label>
+        <select id="taskPriority">
+          <option value="P0">P0</option>
+          <option value="P1">P1</option>
+          <option value="P2">P2</option>
+          <option value="P3" selected>P3</option>
+        </select>
+      </div>
+      <div>
+        <label>Statut</label>
+        <input type="text" id="taskStatus" placeholder="Statut" list="statusOptions">
+        <datalist id="statusOptions"></datalist>
+      </div>
+    </div>
     <label>Dépendances</label>
     <select id="taskDependencies" multiple></select>
     <div class="dependencies-actions">
@@ -359,9 +454,14 @@ let reorderState = null;
 let pendingBarAnimation = null;
 let ccFilters = new Set();
 let teamFilters = new Set();
+let drillFilterTaskIds = new Set();
 let tooltipTaskId = null;
 let acCurrentInput = null;
 let extensionColor = '#ff3333';
+let showRemainingJo = true;
+let focusedTaskId = null;
+let selectedTaskId = null;
+const workingDaysCache = new Map();
 
 // ── Persistence ──
 function loadTasks() {
@@ -381,15 +481,34 @@ function loadTasks() {
   repairDependencies();
 }
 function saveTasks() { localStorage.setItem('lightgantt_tasks', JSON.stringify(tasks)); }
-function toggleInlineForm() {
-  document.getElementById('taskPanelFooter').classList.toggle('collapsed');
-}
 function toggleSettingsMenu() {
+  closeZoomMenu();
   document.getElementById('settingsMenu').classList.toggle('open');
+}
+function toggleZoomMenu() {
+  document.getElementById('settingsMenu').classList.remove('open');
+  document.getElementById('zoomOptions').classList.toggle('open');
+}
+function closeZoomMenu() {
+  document.getElementById('zoomOptions').classList.remove('open');
+}
+function setZoomAndClose(mode) {
+  changeZoom(mode);
+  closeZoomMenu();
+}
+function refreshZoomButtonLabel() {
+  const labels = { day: 'Jour', week: 'Semaine', month: 'Mois' };
+  const zoomBtn = document.getElementById('zoomToggleBtn');
+  if (!zoomBtn) return;
+  const label = labels[zoomMode] || 'Semaine';
+  zoomBtn.setAttribute('data-label', `Zoom: ${label}`);
+  zoomBtn.setAttribute('title', `Zoom: ${label}`);
 }
 document.addEventListener('click', function(e) {
   const menu = document.getElementById('settingsMenu');
   if (menu && !menu.contains(e.target)) menu.classList.remove('open');
+  const zoomMenu = document.getElementById('zoomMenu');
+  if (zoomMenu && !zoomMenu.contains(e.target)) closeZoomMenu();
 });
 function loadExtensionColor() { 
   const saved = localStorage.getItem('lightgantt_extensionColor');
@@ -398,6 +517,18 @@ function loadExtensionColor() {
   document.documentElement.style.setProperty('--extension-color', extensionColor);
 }
 function saveExtensionColor(color) { localStorage.setItem('lightgantt_extensionColor', color); }
+function loadShowRemainingJo() {
+  const saved = localStorage.getItem('lightgantt_showRemainingJo');
+  showRemainingJo = saved === null ? true : saved === 'true';
+  const toggle = document.getElementById('showRemainingJoToggle');
+  if (toggle) toggle.checked = showRemainingJo;
+}
+function saveShowRemainingJo(value) { localStorage.setItem('lightgantt_showRemainingJo', String(value)); }
+function setShowRemainingJo(value) {
+  showRemainingJo = !!value;
+  saveShowRemainingJo(showRemainingJo);
+  render();
+}
 function setExtensionColor(color) {
   extensionColor = color;
   saveExtensionColor(color);
@@ -410,12 +541,16 @@ function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Dat
 
 function normalizeTask(task) {
   const parsedEtp = task.etp === '' || task.etp === null || task.etp === undefined ? null : parseFloat(task.etp);
+  const rawPriority = String(task.priority || 'P3').toUpperCase();
+  const priority = ['P0', 'P1', 'P2', 'P3'].includes(rawPriority) ? rawPriority : 'P3';
   return {
     id: task.id || uid(),
     name: task.name || 'Tâche sans nom',
     application: (task.application || 'Sans application').trim() || 'Sans application',
     cc: (task.cc || '').trim(),
     porteur: (task.porteur || '').trim(),
+    priority,
+    status: (task.status || '').trim(),
     etp: Number.isFinite(parsedEtp) ? parsedEtp : null,
     start: task.start,
     end: task.end,
@@ -436,14 +571,16 @@ function repairDependencies() {
 
 function getVisibleTasks() {
   return tasks.filter(task => {
+    // If drill filter is active, only show tasks in the drill list
+    if (drillFilterTaskIds.size > 0 && !drillFilterTaskIds.has(task.id)) return false;
+    
     const ccOk = ccFilters.size === 0 || ccFilters.has(task.cc || 'Sans CC');
     const teamOk = teamFilters.size === 0 || teamFilters.has(task.application || 'Sans application');
     return ccOk && teamOk;
   });
 }
 
-function getGroupedVisibleRows() {
-  const visibleTasks = getVisibleTasks();
+function getGroupedVisibleRows(visibleTasks = getVisibleTasks()) {
   const groups = new Map();
 
   visibleTasks.forEach(task => {
@@ -461,18 +598,30 @@ function getGroupedVisibleRows() {
   });
 }
 
-function getVisibleTaskIndexMap() {
+function getVisibleTaskIndexMap(rows = getGroupedVisibleRows()) {
   const map = new Map();
-  getGroupedVisibleRows().forEach((row, index) => {
+  rows.forEach((row, index) => {
     if (row.type === 'task') map.set(row.task.id, index);
   });
   return map;
 }
 
 // ── Filters ──
-function syncFilterRow(containerId, getValue, fallback, filterSet, allLabel, onToggle) {
+function getFilterSourceTasks(excludedFilter) {
+  return tasks.filter(task => {
+    if (drillFilterTaskIds.size > 0 && !drillFilterTaskIds.has(task.id)) return false;
+
+    const ccLabel = task.cc || 'Sans CC';
+    const teamLabel = task.application || 'Sans application';
+    const ccOk = excludedFilter === 'cc' || ccFilters.size === 0 || ccFilters.has(ccLabel);
+    const teamOk = excludedFilter === 'team' || teamFilters.size === 0 || teamFilters.has(teamLabel);
+    return ccOk && teamOk;
+  });
+}
+
+function syncFilterRow(containerId, sourceTasks, getValue, fallback, filterSet, allLabel, onToggle) {
   const container = document.getElementById(containerId);
-  const values = [...new Set(tasks.map(t => getValue(t) || fallback))].sort((a, b) => a.localeCompare(b, 'fr'));
+  const values = [...new Set(sourceTasks.map(t => getValue(t) || fallback))].sort((a, b) => a.localeCompare(b, 'fr'));
   // Prune stale active filters
   const pruned = new Set([...filterSet].filter(v => values.includes(v)));
   filterSet.clear(); pruned.forEach(v => filterSet.add(v));
@@ -547,8 +696,6 @@ document.addEventListener('focusout', e => {
   if (e.target.dataset && e.target.dataset.ac) setTimeout(acHide, 120);
 });
 
-function changeCcFilter(value)   { toggleFilter(ccFilters,   value); }
-
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -570,17 +717,6 @@ function getDefaultTaskDates() {
   return { start: fmt(start), end: fmt(end) };
 }
 
-function resetInlineTaskForm() {
-  const defaults = getDefaultTaskDates();
-  document.getElementById('inlineTaskName').value = '';
-  document.getElementById('inlineTaskApplication').value = '';
-  document.getElementById('inlineTaskCc').value = '';
-  document.getElementById('inlineTaskPorteur').value = '';
-  document.getElementById('inlineTaskEtp').value = '';
-  document.getElementById('inlineTaskStart').value = defaults.start;
-  document.getElementById('inlineTaskEnd').value = defaults.end;
-}
-
 function createTask(taskData) {
   tasks.push(normalizeTask({
     id: uid(),
@@ -588,6 +724,8 @@ function createTask(taskData) {
     application: taskData.application,
     cc: taskData.cc,
     porteur: taskData.porteur,
+    priority: taskData.priority,
+    status: taskData.status,
     etp: taskData.etp,
     start: taskData.start,
     end: taskData.end,
@@ -601,8 +739,7 @@ function createTask(taskData) {
 }
 
 // ── Timeline range ──
-function getRange() {
-  const visibleTasks = getVisibleTasks();
+function getRange(visibleTasks = getVisibleTasks()) {
   if (!visibleTasks.length) { const t = new Date(); return { start: new Date(t.getFullYear(), t.getMonth(), 1), end: new Date(t.getFullYear(), t.getMonth()+2, 0) }; }
   let min = parseDate(visibleTasks[0].start), max = parseDate(visibleTasks[0].end);
   visibleTasks.forEach(t => { const s=parseDate(t.start), e=parseDate(t.end); if(s<min) min=s; if(e>max) max=e; });
@@ -619,26 +756,38 @@ function countWorkingDays(startDate, endDate) {
   cur.setHours(0, 0, 0, 0);
   const end = new Date(endDate);
   end.setHours(0, 0, 0, 0);
+  const cacheKey = `${cur.getTime()}|${end.getTime()}`;
+  const cached = workingDaysCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
   let count = 0;
   while (cur <= end) {
     const day = cur.getDay();
     if (day !== 0 && day !== 6) count++;
     cur.setDate(cur.getDate() + 1);
   }
+  if (workingDaysCache.size > 6000) workingDaysCache.clear();
+  workingDaysCache.set(cacheKey, count);
   return count;
 }
 
 // ── Render ──
 function render() {
-  syncFilterRow('teamFilterButtons', t => t.application, 'Sans application', teamFilters, 'Toutes les Teams', 'changeTeamFilter');
-  syncFilterRow('ccFilterButtons',   t => t.cc,          'Sans CC',          ccFilters,   'Tous les CC',      'changeCcFilter');
-  renderTaskList();
-  renderGantt();
+  const visibleTasks = getVisibleTasks();
+  const rows = getGroupedVisibleRows(visibleTasks);
+  const taskIndexMap = getVisibleTaskIndexMap(rows);
+  const teamFilterSourceTasks = getFilterSourceTasks('team');
+  const ccFilterSourceTasks = getFilterSourceTasks('cc');
+
+  syncFilterRow('teamFilterButtons', teamFilterSourceTasks, t => t.application, 'Sans application', teamFilters, 'Toutes les Teams', 'changeTeamFilter');
+  syncFilterRow('ccFilterButtons',   ccFilterSourceTasks,   t => t.cc,          'Sans CC',          ccFilters,   'Tous les CC',      'changeCcFilter');
+  renderTaskList(rows);
+  renderGantt(rows, visibleTasks, taskIndexMap);
+  renderKpis(visibleTasks);
 }
 
-function renderTaskList() {
+function renderTaskList(rows) {
   const el = document.getElementById('taskList');
-  const rows = getGroupedVisibleRows();
   el.innerHTML = rows.map(row => {
     if (row.type === 'group') {
       return `<div class="task-group-row"><span>${escapeHtml(row.application)}</span><span>${row.count} tâche${row.count > 1 ? 's' : ''}</span></div>`;
@@ -646,8 +795,9 @@ function renderTaskList() {
 
     const task = row.task;
     const ccLabel = task.cc || 'Sans CC';
+    const selectedClass = selectedTaskId === task.id ? ' selected' : '';
     return `
-      <div class="task-row" draggable="true" ondblclick="openModal('${task.id}')" data-id="${task.id}"
+      <div class="task-row${selectedClass}" draggable="true" onclick="selectTask('${task.id}')" ondblclick="openModal('${task.id}')" data-id="${task.id}"
         ondragstart="startTaskReorder(event,'${task.id}')"
         ondragover="onTaskDragOver(event,'${task.id}')"
         ondrop="dropTaskReorder(event,'${task.id}')"
@@ -665,13 +815,164 @@ function renderTaskList() {
 
 function formatShort(s) { const d=parseDate(s); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}); }
 
-function renderGantt() {
-  const range = getRange();
+function updateSelectedTaskRowUI() {
+  document.querySelectorAll('.task-row.selected').forEach(row => row.classList.remove('selected'));
+  if (!selectedTaskId) return;
+  const row = document.querySelector(`.task-row[data-id="${selectedTaskId}"]`);
+  if (row) row.classList.add('selected');
+}
+
+function selectTask(taskId) {
+  selectedTaskId = taskId;
+  focusedTaskId = taskId;
+  updateSelectedTaskRowUI();
+  focusGanttBar(taskId);
+}
+
+// Stores the task lists for KPI drill-down, keyed by drill ID
+const _kpiDrillData = {};
+
+function renderKpis(visibleTasks) {
+  const el = document.getElementById('kpiBar');
+  if (!el) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const doneTasks    = visibleTasks.filter(t => t.progress === 100);
+  const lateTasks    = visibleTasks.filter(t => t.progress < 100 && parseDate(t.end) < today);
+  const activeTasks  = visibleTasks.filter(t => { const s=parseDate(t.start),e=parseDate(t.end); return t.progress < 100 && s <= today && e >= today; });
+  const pendingTasks = visibleTasks.filter(t => t.progress < 100 && parseDate(t.start) > today);
+
+  let totalDur = 0, weightedProg = 0;
+  visibleTasks.forEach(t => {
+    const dur = Math.max(1, daysBetween(parseDate(t.start), parseDate(t.end)) + 1);
+    totalDur += dur;
+    weightedProg += dur * t.progress;
+  });
+  const avgProgress = totalDur > 0 ? Math.round(weightedProg / totalDur) : 0;
+
+  const etpTotal = visibleTasks.reduce((sum, t) => sum + (t.etp !== null ? t.etp : 0), 0);
+
+  let joRestants = 0;
+  visibleTasks.forEach(t => {
+    if (t.progress >= 100) return;
+    const s = parseDate(t.start), e = parseDate(t.end);
+    const totalDays = daysBetween(s, e) + 1;
+    const completedDays = Math.floor(totalDays * t.progress / 100);
+    const remStart = new Date(s); remStart.setDate(remStart.getDate() + completedDays);
+    if (remStart <= e) joRestants += countWorkingDays(remStart, e);
+  });
+
+  const teamsCount = new Set(visibleTasks.map(t => t.application)).size;
+
+  // Store drill data for click handlers
+  _kpiDrillData['avancement']  = { label: 'Avancement — toutes les tâches', list: [...visibleTasks].sort((a,b) => a.progress - b.progress) };
+  _kpiDrillData['terminees']   = { label: 'Terminées', list: doneTasks };
+  _kpiDrillData['en-cours']    = { label: 'En cours', list: activeTasks };
+  _kpiDrillData['en-retard']   = { label: 'En retard', list: lateTasks };
+  _kpiDrillData['non-demarrees'] = { label: 'Non démarrées', list: pendingTasks };
+
+  const kpis = [
+    { label:'Tâches',         value: visibleTasks.length, cls: '',                      drill: null },
+    { label:'Teams',          value: teamsCount,           cls: '',                      drill: null },
+    { label:'Avancement',     value: avgProgress+'%',      cls: avgProgress===100?'kpi-green':avgProgress>=70?'kpi-blue':avgProgress>=40?'kpi-orange':'', drill: 'avancement' },
+    { label:'Terminées',      value: doneTasks.length,     cls: doneTasks.length>0?'kpi-green':'',   drill: 'terminees' },
+    { label:'En cours',       value: activeTasks.length,   cls: activeTasks.length>0?'kpi-blue':'',  drill: 'en-cours' },
+    { label:'En retard',      value: lateTasks.length,     cls: lateTasks.length>0?'kpi-red':'',     drill: 'en-retard' },
+    { label:'Non démarrées',  value: pendingTasks.length,  cls: '',                      drill: 'non-demarrees' },
+    { label:'ETP total',      value: etpTotal>0?etpTotal.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:1}):'—', cls: '', drill: null },
+    { label:'JO restants',    value: joRestants,           cls: joRestants>0?'kpi-orange':'',        drill: null },
+  ];
+
+  el.innerHTML = kpis.map(k => {
+    const clickable = k.drill ? ` kpi-clickable" onclick="openKpiDrill('${k.drill}')` : '';
+    return `<div class="kpi-item${clickable}"><span class="kpi-label">${k.label}</span><span class="kpi-value${k.cls?' '+k.cls:''}">${k.value}</span></div>`;
+  }).join('');
+}
+
+function openKpiDrill(drillId) {
+  const data = _kpiDrillData[drillId];
+  if (!data) return;
+  const overlay = document.getElementById('kpiDrillOverlay');
+  document.getElementById('kpiDrillTitle').textContent = data.label;
+  document.getElementById('kpiDrillCount').textContent = `(${data.list.length} tâche${data.list.length !== 1 ? 's' : ''})`;
+
+  // Apply drill filter to show only these tasks in the gantt
+  drillFilterTaskIds.clear();
+  data.list.forEach(t => drillFilterTaskIds.add(t.id));
+  render();
+
+  const body = document.getElementById('kpiDrillBody');
+  if (!data.list.length) {
+    body.innerHTML = '<div class="kpi-drill-empty">Aucune tâche dans cette catégorie.</div>';
+  } else {
+    body.innerHTML = data.list.map(t => {
+      const progColor = t.progress === 100 ? '#06d6a0' : t.progress >= 70 ? '#00b4d8' : t.progress >= 30 ? '#ffd166' : '#e94560';
+      const cc = escapeHtml(t.cc || 'Sans CC');
+      const team = escapeHtml(t.application || 'Sans application');
+      return `<div class="kpi-drill-row" onclick="focusGanttBar('${t.id}')" ondblclick="openModal('${t.id}')"
+          title="Cliquer pour mettre en focus, double-cliquer pour modifier">
+        <div class="kpi-drill-dot" style="background:${t.color}"></div>
+        <div>
+          <div class="kpi-drill-name">${escapeHtml(t.name)}</div>
+          <div class="kpi-drill-meta">${team} · ${cc}${t.porteur ? ' · ' + escapeHtml(t.porteur) : ''}</div>
+        </div>
+        <div class="kpi-drill-right">
+          <div class="kpi-drill-text">
+            <div class="kpi-drill-prog" style="color:${progColor}">${t.progress}%</div>
+            <div class="kpi-drill-dates">${formatShort(t.start)} → ${formatShort(t.end)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  overlay.classList.add('active');
+}
+
+function closeKpiDrill() {
+  document.getElementById('kpiDrillOverlay').classList.remove('active');
+  
+  // Clear drill filter and rerender to show all tasks again
+  drillFilterTaskIds.clear();
+  render();
+}
+
+function focusGanttBar(taskId) {
+  // Clear previous focus
+  document.querySelectorAll('.gantt-bar.focused-kpi').forEach(b => b.classList.remove('focused-kpi'));
+  focusedTaskId = taskId;
+
+  // Find and focus the bar
+  const bar = document.querySelector(`.gantt-bar[data-id="${taskId}"]`);
+  if (!bar) return;
+
+  // Scroll to center the bar horizontally and vertically
+  const ganttPanel = document.getElementById('ganttPanel');
+  const drillPanel = document.getElementById('kpiDrillOverlay').classList.contains('active') ? document.getElementById('kpiDrillPanel') : null;
+  const barRect = bar.getBoundingClientRect();
+  const panelRect = ganttPanel.getBoundingClientRect();
+  const obstructedWidth = drillPanel ? drillPanel.offsetWidth : 0;
+  const visibleWidth = Math.max(120, panelRect.width - obstructedWidth);
+
+  // Horizontal scroll: center the bar in the visible area left of the drill panel
+  const barCenterX = barRect.left + barRect.width / 2 - panelRect.left;
+  const newScrollLeft = ganttPanel.scrollLeft + barCenterX - visibleWidth / 2;
+  ganttPanel.scrollLeft = Math.max(0, newScrollLeft);
+
+  // Vertical scroll: center the bar
+  const barCenterY = barRect.top + barRect.height / 2 - panelRect.top;
+  const newScrollTop = ganttPanel.scrollTop + barCenterY - panelRect.height / 2;
+  ganttPanel.scrollTop = Math.max(0, newScrollTop);
+
+  // Add focus class
+  bar.classList.add('focused-kpi');
+}
+
+function renderGantt(rows, visibleTasks, taskIndexMap) {
+  const range = getRange(visibleTasks);
   const days = daysBetween(range.start, range.end) + 1;
   const totalWidth = days * cellWidth;
   const today = new Date(); today.setHours(0,0,0,0);
-  const rows = getGroupedVisibleRows();
-  const taskIndexMap = getVisibleTaskIndexMap();
 
   // Header
   const header = document.getElementById('ganttHeader');
@@ -739,7 +1040,7 @@ function renderGantt() {
         <path d="M 0 1 L 7 4 L 0 7 Z" fill="rgba(255,200,50,0.95)"></path>
       </marker>
     </defs>
-    ${renderDependencyPaths(range, taskIndexMap)}
+    ${renderDependencyPaths(range, taskIndexMap, visibleTasks)}
   </svg>`;
 
   // Bars overlay
@@ -778,18 +1079,18 @@ function renderGantt() {
     const totalDays = daysBetween(s, e) + 1;
     const completedDays = Math.floor(totalDays * progressRatio);
     const nonProgressWidth = width - progressPx;
-    if (completedDays < totalDays && nonProgressWidth >= 34) {
+    if (showRemainingJo && completedDays < totalDays && nonProgressWidth >= 34) {
       const remainingStart = new Date(s);
       remainingStart.setDate(remainingStart.getDate() + completedDays);
       const remainingWorkDays = countWorkingDays(remainingStart, e);
       if (remainingWorkDays > 0) {
         const label = `${remainingWorkDays} JO`;
-        const labelCenter = progressPx + (nonProgressWidth / 2);
-        remainingDaysHtml = `<div class="bar-remaining-days" style="left:${labelCenter}px">${label}</div>`;
+        remainingDaysHtml = `<div class="bar-remaining-days">${label}</div>`;
       }
     }
 
-    html += `<div class="gantt-bar${dragClass}" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}"
+    const focusClass = focusedTaskId === t.id ? ' focused-kpi' : '';
+    html += `<div class="gantt-bar${dragClass}${focusClass}" data-id="${t.id}" style="left:${left}px;top:${top}px;width:${width}px;background:${t.color}"
       onmouseenter="showTaskTooltip(event,'${t.id}')"
       onmousemove="moveTaskTooltip(event)"
       onmouseleave="hideTaskTooltip()"
@@ -801,7 +1102,7 @@ function renderGantt() {
       <div class="resize-handle right" onmousedown="event.stopPropagation();startDrag(event,'${t.id}','resize-right')"></div>
       <div class="bar-link-handle" onmousedown="event.stopPropagation();startLinkDrag(event,'${t.id}')"></div>
       ${extensionHtml}
-      <span style="position:relative;z-index:1">${escapeHtml(t.name)}</span>
+      <span class="bar-title">${escapeHtml(t.name)}</span>
     </div>`;
   });
   html += '</div>';
@@ -833,14 +1134,16 @@ function renderGantt() {
   }
 }
 
-function renderDependencyPaths(range, taskIndexMap) {
+function renderDependencyPaths(range, taskIndexMap, visibleTasks) {
   const R = 6; // corner radius
-  return getVisibleTasks().flatMap(task => {
+  const taskById = new Map(tasks.map(task => [task.id, task]));
+
+  return visibleTasks.flatMap(task => {
     const targetRowIndex = taskIndexMap.get(task.id);
     if (targetRowIndex === undefined) return [];
 
     return task.dependencies.map(depId => {
-      const sourceTask = tasks.find(item => item.id === depId);
+      const sourceTask = taskById.get(depId);
       const sourceRowIndex = taskIndexMap.get(depId);
       if (!sourceTask || sourceRowIndex === undefined) return '';
 
@@ -881,6 +1184,8 @@ function getTaskById(id) {
 function buildTaskTooltipHtml(task) {
   const ccLabel = task.cc || 'Sans CC';
   const porteurLabel = task.porteur || 'Non renseigné';
+  const priorityLabel = task.priority || 'P3';
+  const statusLabel = task.status || 'Non renseigné';
   const etpLabel = task.etp === null ? 'Non renseigné' : String(task.etp).replace('.', ',');
   const deps = task.dependencies
     .map(depId => getTaskById(depId))
@@ -892,6 +1197,8 @@ function buildTaskTooltipHtml(task) {
     <div class="tt-line"><strong>Team RS/TL:</strong> ${escapeHtml(task.application)}</div>
     <div class="tt-line"><strong>CC:</strong> ${escapeHtml(ccLabel)}</div>
     <div class="tt-line"><strong>Lead:</strong> ${escapeHtml(porteurLabel)}</div>
+    <div class="tt-line"><strong>Priorité:</strong> ${escapeHtml(priorityLabel)}</div>
+    <div class="tt-line"><strong>Statut:</strong> ${escapeHtml(statusLabel)}</div>
     <div class="tt-line"><strong>ETP:</strong> ${escapeHtml(etpLabel)}</div>
     <div class="tt-line"><strong>Début:</strong> ${escapeHtml(task.start)}</div>
     <div class="tt-line"><strong>Fin:</strong> ${escapeHtml(task.end)}</div>
@@ -1225,9 +1532,12 @@ function openModal(id) {
   document.getElementById('taskApplication').value = task ? task.application : '';
   document.getElementById('taskCc').value = task ? task.cc : '';
   document.getElementById('taskPorteur').value = task ? task.porteur : '';
+  document.getElementById('taskPriority').value = task ? (task.priority || 'P3') : 'P3';
+  document.getElementById('taskStatus').value = task ? (task.status || '') : '';
   document.getElementById('taskEtp').value = task && task.etp !== null ? task.etp : '';
   document.getElementById('taskProgress').value = task ? task.progress : 0;
   document.getElementById('progressVal').textContent = (task ? task.progress : 0) + '%';
+  renderStatusOptions(document.getElementById('taskStatus').value);
   syncProgressJoDays();
   document.getElementById('btnDelete').style.display = task ? '' : 'none';
   renderDependencySelect(task);
@@ -1249,7 +1559,11 @@ function pickColor(el, c) {
   document.getElementById('colorOptions').dataset.selected = c;
 }
 
-function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+function closeModal() { 
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.querySelectorAll('.gantt-bar.focused-kpi').forEach(b => b.classList.remove('focused-kpi'));
+  focusedTaskId = null;
+}
 
 document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
@@ -1276,6 +1590,22 @@ function renderDependencySelect(task) {
 function clearDependencySelection() {
   const select = document.getElementById('taskDependencies');
   [...select.options].forEach(option => { option.selected = false; });
+}
+
+function getStatusOptions(currentValue = '') {
+  const defaults = ['A engager', 'A mettre en AP', 'A mettre en production', 'En attente utilisateur'];
+  const fromTasks = tasks.map(task => (task.status || '').trim()).filter(Boolean);
+  const current = (currentValue || '').trim();
+  return [...new Set([...defaults, ...fromTasks, ...(current ? [current] : [])])]
+    .sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+function renderStatusOptions(currentValue = '') {
+  const datalist = document.getElementById('statusOptions');
+  if (!datalist) return;
+  datalist.innerHTML = getStatusOptions(currentValue)
+    .map(status => `<option value="${escapeHtml(status)}"></option>`)
+    .join('');
 }
 
 // ── Progress modal helpers ──
@@ -1318,6 +1648,8 @@ function saveTask() {
   const application = document.getElementById('taskApplication').value.trim() || 'Sans application';
   const cc = document.getElementById('taskCc').value.trim();
   const porteur = document.getElementById('taskPorteur').value.trim();
+  const priority = document.getElementById('taskPriority').value || 'P3';
+  const status = document.getElementById('taskStatus').value.trim();
   const etpRaw = document.getElementById('taskEtp').value;
   const etp = etpRaw === '' ? null : parseFloat(etpRaw);
   const progress = parseInt(document.getElementById('taskProgress').value);
@@ -1333,54 +1665,15 @@ function saveTask() {
     const t = tasks.find(t => t.id === id);
     // Réinitialise plannedEnd si la date de fin a été modifiée explicitement dans la modal
     const newPlannedEnd = (t && t.end !== end) ? end : (t ? t.plannedEnd : end);
-    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, etp, start, end, plannedEnd: newPlannedEnd, progress, color, dependencies, milestones })); }
+    if (t) { Object.assign(t, normalizeTask({ ...t, name, application, cc, porteur, priority, status, etp, start, end, plannedEnd: newPlannedEnd, progress, color, dependencies, milestones })); }
   } else {
-    createTask({ name, application, cc, porteur, etp, start, end, plannedEnd: end, progress, color, dependencies, milestones });
+    createTask({ name, application, cc, porteur, priority, status, etp, start, end, plannedEnd: end, progress, color, dependencies, milestones });
     closeModal();
     return;
   }
   saveTasks();
   closeModal();
   render();
-}
-
-function createInlineTask() {
-  const nameInput = document.getElementById('inlineTaskName');
-  const applicationInput = document.getElementById('inlineTaskApplication');
-  const ccInput = document.getElementById('inlineTaskCc');
-  const porteurInput = document.getElementById('inlineTaskPorteur');
-  const etpInput = document.getElementById('inlineTaskEtp');
-  const startInput = document.getElementById('inlineTaskStart');
-  const endInput = document.getElementById('inlineTaskEnd');
-
-  const name = nameInput.value.trim();
-  const application = applicationInput.value.trim() || 'Sans application';
-  const cc = ccInput.value.trim();
-  const porteur = porteurInput.value.trim();
-  const etp = etpInput.value === '' ? null : parseFloat(etpInput.value);
-  const start = startInput.value;
-  const end = endInput.value;
-
-  if (!name) {
-    nameInput.focus();
-    return;
-  }
-
-  if (!start || !end || parseDate(end) < parseDate(start)) {
-    alert('Dates invalides');
-    startInput.focus();
-    return;
-  }
-
-  if (etp !== null && (!Number.isFinite(etp) || etp < 0)) {
-    alert('ETP invalide');
-    etpInput.focus();
-    return;
-  }
-
-  createTask({ name, application, cc, porteur, etp, start, end });
-  resetInlineTaskForm();
-  nameInput.focus();
 }
 
 function deleteTask() {
@@ -1557,16 +1850,102 @@ function endMilestoneDrag() {
 function changeZoom(mode) {
   zoomMode = mode;
   cellWidth = ZOOM[mode];
+  refreshZoomButtonLabel();
   render();
+}
+
+// ── Demo data ──
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function addDays(base, offset) { const d = new Date(base); d.setDate(d.getDate() + offset); return d; }
+
+function generateDemoWorkload() {
+  const teamCount = 10;
+  const minTasks = 15;
+  const maxTasks = 20;
+  const ccPool = ['DEV', 'QA', 'OPS', 'RUN', 'DATA', 'SEC'];
+  const leadPool = ['A. Martin', 'L. Bernard', 'N. Leroy', 'S. Dubois', 'M. Moreau', 'P. Simon', 'C. Fontaine', 'R. Lopez'];
+  const steps = ['Cadrage', 'Conception', 'Dev API', 'Dev Front', 'Tests', 'Recette', 'Déploiement', 'Stabilisation', 'Run'];
+  const startBase = new Date();
+  startBase.setHours(0, 0, 0, 0);
+  const oneYearDays = 365;
+
+  const createdByTeam = [];
+  let createdCount = 0;
+
+  for (let teamIdx = 1; teamIdx <= teamCount; teamIdx++) {
+    const teamName = `Team RS/TL ${String(teamIdx).padStart(2, '0')}`;
+    const taskCount = randInt(minTasks, maxTasks);
+    const createdIds = [];
+
+    for (let i = 0; i < taskCount; i++) {
+      const startOffset = randInt(0, oneYearDays - 20);
+      const duration = randInt(4, 28);
+      const startDate = addDays(startBase, startOffset);
+      const endDate = addDays(startDate, duration);
+      const progress = randInt(0, 100);
+      const depCandidates = createdIds.slice(0, Math.max(0, createdIds.length - 1));
+      const dependencies = [];
+
+      if (depCandidates.length && Math.random() < 0.45) dependencies.push(pickRandom(depCandidates));
+      if (depCandidates.length > 2 && Math.random() < 0.2) {
+        const extra = pickRandom(depCandidates);
+        if (!dependencies.includes(extra)) dependencies.push(extra);
+      }
+
+      const task = normalizeTask({
+        id: uid(),
+        name: `${pickRandom(steps)} ${String(i + 1).padStart(2, '0')}`,
+        application: teamName,
+        cc: pickRandom(ccPool),
+        porteur: pickRandom(leadPool),
+        etp: [0.3, 0.5, 0.8, 1, 1.5, 2][randInt(0, 5)],
+        start: fmt(startDate),
+        end: fmt(endDate),
+        plannedEnd: fmt(endDate),
+        progress,
+        color: COLORS[randInt(0, COLORS.length - 1)],
+        dependencies,
+      });
+
+      tasks.push(task);
+      createdIds.push(task.id);
+      createdCount++;
+    }
+
+    createdByTeam.push(createdIds);
+  }
+
+  // Quelques dépendances inter-teams pour simuler un vrai portefeuille
+  for (let i = 1; i < createdByTeam.length; i++) {
+    const currentTeamTasks = createdByTeam[i];
+    const prevTeamTasks = createdByTeam[i - 1];
+    if (!currentTeamTasks.length || !prevTeamTasks.length) continue;
+    const linkCount = randInt(1, 3);
+    for (let l = 0; l < linkCount; l++) {
+      const targetId = pickRandom(currentTeamTasks);
+      const depId = pickRandom(prevTeamTasks);
+      const target = tasks.find(t => t.id === targetId);
+      if (!target || depId === targetId) continue;
+      if (!target.dependencies.includes(depId)) target.dependencies.push(depId);
+    }
+  }
+
+  repairDependencies();
+  saveTasks();
+  render();
+  alert(`${createdCount} tâches démo ajoutées sur ${teamCount} teams.`);
 }
 
 // ── Export / Import ──
 function exportJSON() {
   const blob = new Blob([JSON.stringify(tasks, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  a.href = url;
   a.download = 'lightgantt_' + fmt(new Date()) + '.json';
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function importJSON(e) {
@@ -1599,16 +1978,7 @@ function goToToday() {
 
 // ── Keyboard ──
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); hideTaskTooltip(); }
-});
-
-['inlineTaskName', 'inlineTaskApplication', 'inlineTaskCc', 'inlineTaskPorteur', 'inlineTaskEtp', 'inlineTaskStart', 'inlineTaskEnd'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      createInlineTask();
-    }
-  });
+  if (e.key === 'Escape') { closeModal(); hideTaskTooltip(); if (document.getElementById('kpiDrillOverlay').classList.contains('active')) { closeKpiDrill(); } }
 });
 
 // ── Sync scroll ──
@@ -1622,10 +1992,15 @@ document.getElementById('taskList').addEventListener('scroll', function() {
   document.getElementById('ganttPanel').scrollTop = this.scrollTop;
 });
 
+document.getElementById('taskStatus').addEventListener('input', function() {
+  renderStatusOptions(this.value);
+});
+
 // ── Init ──
 loadTasks();
 loadExtensionColor();
-resetInlineTaskForm();
+loadShowRemainingJo();
+refreshZoomButtonLabel();
 render();
 goToToday();
 </script>
